@@ -32,48 +32,56 @@ async function main() {
   mkdirSync(SHOTS_DIR, { recursive: true });
 
   let server = null;
-  if (!(await isServerUp())) {
-    console.log("Starting Vite dev server...");
-    server = spawn("pnpm", ["dev"], { cwd: REPO_ROOT, stdio: "ignore" });
-    if (!(await waitForServer())) {
-      throw new Error("Vite dev server did not come up on :1420");
+  let browser = null;
+
+  try {
+    if (!(await isServerUp())) {
+      console.log("Starting Vite dev server...");
+      server = spawn("pnpm", ["dev"], { cwd: REPO_ROOT, stdio: "ignore" });
+      if (!(await waitForServer())) {
+        throw new Error("Vite dev server did not come up on :1420");
+      }
+    }
+
+    browser = await chromium.launch();
+    const context = await browser.newContext({
+      viewport: { width: 1920, height: 1080 },
+      deviceScaleFactor: 1,
+    });
+
+    await context.addInitScript(() => {
+      localStorage.setItem("tooly_language", "en");
+    });
+    await context.addInitScript({ path: MOCK_PATH });
+
+    const page = await context.newPage();
+    await page.goto(DEV_URL, { waitUntil: "domcontentloaded" });
+
+    // Shot 1: connection card / radar moment (before auto-discovery resolves)
+    await page.waitForTimeout(350);
+    await page.screenshot({ path: path.join(SHOTS_DIR, "01-connect.png") });
+
+    // Shot 2: populated dashboard with update badges
+    await page.locator("h4", { hasText: "etaHEN" }).waitFor({ timeout: 15000 });
+    await page.locator("span", { hasText: "Update" }).first().waitFor({ timeout: 15000 });
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: path.join(SHOTS_DIR, "02-dashboard.png") });
+
+    // Shot 3: install in progress (trigger_dpi_update held open by mock for 3s)
+    const updateButtons = page.locator("button", { hasText: "Update" });
+    await updateButtons.first().click();
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(SHOTS_DIR, "03-installing.png") });
+
+    console.log("Shots written to", SHOTS_DIR);
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
+    if (server) {
+      server.kill("SIGTERM");
     }
   }
-
-  const browser = await chromium.launch();
-  const context = await browser.newContext({
-    viewport: { width: 1920, height: 1080 },
-    deviceScaleFactor: 1,
-  });
-
-  await context.addInitScript(() => {
-    localStorage.setItem("tooly_language", "en");
-  });
-  await context.addInitScript({ path: MOCK_PATH });
-
-  const page = await context.newPage();
-  await page.goto(DEV_URL, { waitUntil: "domcontentloaded" });
-
-  // Shot 1: connection card / radar moment (before auto-discovery resolves)
-  await page.waitForTimeout(350);
-  await page.screenshot({ path: path.join(SHOTS_DIR, "01-connect.png") });
-
-  // Shot 2: populated dashboard with update badges
-  await page.locator("h4", { hasText: "etaHEN" }).waitFor({ timeout: 15000 });
-  await page.locator("span", { hasText: "Update" }).first().waitFor({ timeout: 15000 });
-  await page.waitForTimeout(900);
-  await page.screenshot({ path: path.join(SHOTS_DIR, "02-dashboard.png") });
-
-  // Shot 3: install in progress (trigger_dpi_update held open by mock for 3s)
-  const updateButtons = page.locator("button", { hasText: "Update" });
-  await updateButtons.first().click();
-  await page.waitForTimeout(700);
-  await page.screenshot({ path: path.join(SHOTS_DIR, "03-installing.png") });
-
-  await browser.close();
-  if (server) server.kill("SIGTERM");
-
-  console.log("Shots written to", SHOTS_DIR);
 }
 
 main().catch((err) => {
