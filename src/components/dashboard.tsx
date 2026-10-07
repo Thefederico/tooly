@@ -27,6 +27,8 @@ import {
   Gamepad2,
   CheckCircle,
   AlertCircle,
+  Search,
+  X,
 } from "lucide-react";
 import { ArchiveUpdatesModal } from "./archive-updates-modal";
 import { ArchiveOrgGameUpdate } from "../lib/types";
@@ -59,6 +61,8 @@ export function Dashboard() {
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [hasDiscoveredConsole, setHasDiscoveredConsole] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | "updates" | "homebrew" | "games" | "payloads">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
   const [localPayloads, setLocalPayloads] = useState<LocalPayload[]>([]);
@@ -187,13 +191,15 @@ export function Dashboard() {
     // 1. Mapear apps registradas que tienen repositorio en GitHub
     for (const app of apps) {
       const reg = registry.find((r) => r.titleId?.toUpperCase() === app.title_id.toUpperCase());
+      const isPayload = app.title_id.startsWith("PAYLOAD_");
       if (reg && reg.githubRepo) {
         repoMap.set(reg.githubRepo.toLowerCase(), { app, reg });
       } else {
         stateMap[app.title_id] = {
           installed: app,
+          registry: reg,
           hasUpdate: false,
-          statusText: t.statusNoMapping,
+          statusText: isPayload ? t.standalonePayload : t.statusNoMapping,
         };
       }
     }
@@ -237,7 +243,7 @@ export function Dashboard() {
               statusText: hasUpdate
                 ? `${t.updateAvailable} ${rel.tag_name}`
                 : isNewer && !hasCompatibleAsset
-                ? `${rel.tag_name} (Sin PKG/ZIP)`
+                ? `${rel.tag_name} (${t.noDirectPkg})`
                 : t.upToDateBadge,
             };
           } else {
@@ -586,19 +592,19 @@ export function Dashboard() {
 
             {/* HERO CTA: Radar Auto-Detection Button */}
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 rounded-xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 rounded-xl blur-xs opacity-40 group-hover:opacity-100 transition duration-300"></div>
               <button
                 onClick={handleDiscoverPs5}
                 disabled={isDiscovering || isScanningFtp}
                 title={t.autoDetectTooltip}
-                className="relative w-full py-3 px-4 bg-slate-950/90 hover:bg-slate-900 border border-cyan-400/50 rounded-xl flex items-center justify-between transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left shadow-[0_0_20px_rgba(0,240,255,0.15)] group-hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] active:scale-[0.99]"
+                className="relative w-full py-2.5 px-3.5 bg-slate-950/90 hover:bg-slate-900 border border-cyan-400/40 hover:border-cyan-400/70 rounded-xl flex items-center justify-between transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left shadow-[0_0_15px_rgba(0,240,255,0.12)] group-hover:shadow-[0_0_22px_rgba(0,240,255,0.25)] active:scale-[0.99]"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0">
                     <Radar className={`w-4 h-4 text-cyan-400 ${isDiscovering ? "animate-spin text-cyan-300" : "group-hover:scale-110 transition-transform"}`} />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white tracking-wide flex items-center gap-2">
+                    <div className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
                       <span>{isDiscovering ? t.autoDetectRadarScanning : t.autoDetectRadarBtn}</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-mono">
@@ -607,7 +613,7 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
                     LAN :24
                   </span>
@@ -617,10 +623,10 @@ export function Dashboard() {
 
             {/* Target Console State Card */}
             <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800/80 flex flex-col gap-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Gamepad2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span className="text-xs font-mono font-semibold text-cyan-300 tracking-wider">
+                  <span className="text-xs font-mono font-semibold text-cyan-300 tracking-wider truncate">
                     {ps5Ip || "192.168.1.xxx"}
                   </span>
                 </div>
@@ -628,9 +634,9 @@ export function Dashboard() {
                 <button
                   onClick={handleScanPs5}
                   disabled={isScanningFtp || isDiscovering || !ps5Ip}
-                  className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(0,112,209,0.35)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  className="btn-ps-primary px-3.5 py-1.5 text-xs gap-1.5 shrink-0"
                 >
-                  <RefreshCw className={`w-3 h-3 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
                   <span>{isScanningFtp ? t.scanning : t.scan}</span>
                 </button>
               </div>
@@ -680,7 +686,7 @@ export function Dashboard() {
                       handleScanPs5();
                     }}
                     disabled={isScanningFtp || !ps5Ip.trim()}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-medium rounded-xl text-xs transition-all cursor-pointer disabled:opacity-50"
+                    className="btn-ps-secondary px-4 py-2 text-xs shrink-0"
                   >
                     OK
                   </button>
@@ -712,10 +718,10 @@ export function Dashboard() {
                 <button
                   onClick={handleScanPayloads}
                   disabled={isScanningPayloads}
-                  className="w-32 py-2.5 px-3 bg-slate-800 hover:bg-slate-700/90 active:scale-[0.98] text-slate-200 hover:text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700/60 hover:border-slate-600 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  className="btn-ps-secondary px-3.5 py-2.5 text-xs gap-1.5 shrink-0"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningPayloads ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isScanningPayloads ? t.scanning : t.scan}</span>
+                  <span>{isScanningPayloads ? t.scanning : t.scan}</span>
                 </button>
               </div>
             </div>
@@ -817,10 +823,10 @@ export function Dashboard() {
                 <button
                   onClick={handleScanPs5}
                   disabled={isScanningFtp}
-                  className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,112,209,0.4)] disabled:opacity-50 cursor-pointer"
+                  className="btn-ps-primary mt-4 px-6 py-2.5 text-xs gap-2"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isScanningFtp ? "animate-spin" : ""}`} />
-                  {isScanningFtp ? t.scanningConsole : t.scanPs5Now}
+                  <span>{isScanningFtp ? t.scanningConsole : t.scanPs5Now}</span>
                 </button>
               </div>
             ) : (
@@ -899,18 +905,18 @@ export function Dashboard() {
                           {state?.statusText || t.statusScanned}
                         </span>
 
-                        <div className="flex items-center gap-1.5 ml-auto">
+                        <div className="flex items-center gap-2 ml-auto">
                           {/* Botón Archive.org para juegos comerciales */}
                           {(app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) && !app.title_id.startsWith("PAYLOAD_") && (
                             <button
                               onClick={() => handleOpenArchiveModal(app)}
                               title={t.archiveUpdatesBtn}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/70 hover:border-cyan-400/50 text-[11px] font-medium text-cyan-300 hover:text-cyan-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                              className="btn-ps-archive px-3 py-1.5 text-xs gap-1.5"
                             >
-                              <Database className="w-3 h-3 text-cyan-400" />
+                              <Database className="w-3.5 h-3.5 text-cyan-400" />
                               <span>Archive.org</span>
                               {state?.archiveUpdates && state.archiveUpdates.length > 0 && (
-                                <span className="px-1 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold">
+                                <span className="px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-200 font-mono text-[9px] font-bold">
                                   {state.archiveUpdates.length}
                                 </span>
                               )}
@@ -921,14 +927,16 @@ export function Dashboard() {
                             <button
                               onClick={() => handleUpdateApp(app.title_id)}
                               disabled={isUpdating}
-                              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] disabled:opacity-50 cursor-pointer"
+                              className="btn-ps-primary px-3.5 py-1.5 text-xs gap-1.5"
                             >
                               <DownloadCloud className={`w-3.5 h-3.5 ${isUpdating ? "animate-bounce" : ""}`} />
-                              {isUpdating
-                                ? t.installingBtn
-                                : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".pkg"))
-                                ? t.updateBtn
-                                : "ZIP Release"}
+                              <span>
+                                {isUpdating
+                                  ? t.installingBtn
+                                  : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".pkg"))
+                                  ? t.updateBtn
+                                  : "ZIP Release"}
+                              </span>
                             </button>
                           )}
                         </div>

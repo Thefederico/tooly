@@ -53,3 +53,87 @@
 .ambient-radial-glow {
   background: radial-gradient(circle at 50% 0%, rgba(0, 112, 209, 0.18) 0%, rgba(5, 7, 15, 0) 70%);
 }
+
+/* Antigravity 2026 x PS Button Design System */
+.btn-ps-primary {
+  background: linear-gradient(135deg, #0070d1 0%, #00d2ff 100%);
+  color: #030712;
+  font-weight: 700;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+.btn-ps-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0084f7 0%, #38e1ff 100%);
+  box-shadow: 0 0 24px rgba(0, 210, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+.btn-ps-primary:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+}
+.btn-ps-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ps-secondary {
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+.btn-ps-secondary:hover:not(:disabled) {
+  background: rgba(30, 41, 59, 0.95);
+  color: #ffffff;
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+  transform: translateY(-1px);
+}
+.btn-ps-secondary:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+}
+.btn-ps-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ps-archive {
+  background: rgba(8, 20, 44, 0.7);
+  color: #38bdf8;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+.btn-ps-archive:hover:not(:disabled) {
+  background: rgba(14, 38, 80, 0.9);
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+.btn-ps-archive:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+}

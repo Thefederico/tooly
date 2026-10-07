@@ -39,6 +39,9 @@ export interface RegistryItem {
   category: "utility" | "payload" | "emulator" | "game" | "media" | "tool";
   titleId?: string | null;
   githubRepo?: string;
+  directUrl?: string;
+  version?: string;
+  releaseNotes?: string;
   firmwareMin: string;
   firmwareMax: string;
   tags: string[];

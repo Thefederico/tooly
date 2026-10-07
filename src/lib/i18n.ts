@@ -59,7 +59,15 @@ export const translations = {
     scanPs5Now: "Scan PS5 Now",
     scanningConsole: "Scanning console...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "All",
+    filterUpdates: "Updates",
+    filterHomebrew: "Homebrew",
+    filterGames: "Games",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Search app by name or Title ID...",
+    standalonePayload: "Standalone payload",
+    noDirectPkg: "No direct PKG/ZIP",
     updateBadge: "Update",
     upToDateBadge: "Up to date",
     installedVer: "Installed",
@@ -153,7 +161,15 @@ export const translations = {
     scanPs5Now: "Escanear PS5 Ahora",
     scanningConsole: "Escaneando consola...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "Todas",
+    filterUpdates: "Actualizaciones",
+    filterHomebrew: "Homebrew",
+    filterGames: "Juegos",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Buscar por nombre o Title ID...",
+    standalonePayload: "Payload local/directo",
+    noDirectPkg: "Sin PKG/ZIP directo",
     updateBadge: "Update",
     upToDateBadge: "Al día",
     installedVer: "Instalada",
