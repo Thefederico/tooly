@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useAppStore } from "../stores/use-app-store";
 import { tauriApi } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
@@ -27,6 +27,8 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
   const closeFtpStartModal = useAppStore((state) => state.closeFtpStartModal);
   const addLog = useAppStore((state) => state.addLog);
 
+  const ftpStartInFlight = useRef(false);
+
   const t = translations[lang];
 
   // Inyectar e iniciar el payload ftpsrv en la PS5
@@ -34,6 +36,8 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
     async (targetIp?: string): Promise<boolean> => {
       const ip = (targetIp || ps5Ip).trim();
       if (!ip) return false;
+      if (ftpStartInFlight.current) return false;
+      ftpStartInFlight.current = true;
 
       setIsInjectingFtp(true);
       addLog(t.logInjectingFtp(ip));
@@ -59,6 +63,7 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
         addLog(t.logFtpInjectFailed(formatToolyError(err)));
         return false;
       } finally {
+        ftpStartInFlight.current = false;
         setIsInjectingFtp(false);
       }
     },
@@ -87,7 +92,7 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
         } else {
           // Servidor FTP apagado: revisar si el usuario tiene autoStart activado o abrir modal
           if (autoStartFtp) {
-            addLog(`Auto-Payload activo: iniciando automáticamente el daemon FTP en ${selected.ip}...`);
+            addLog(t.logAutoStartFtp(selected.ip));
             setTimeout(() => {
               startFtpServer(selected.ip);
             }, 300);

@@ -10,7 +10,9 @@ use tokio::time::timeout;
 
 pub const ELF_LOADER_PORT_9020: u16 = 9020;
 pub const ELF_LOADER_PORT_9021: u16 = 9021;
+#[allow(dead_code)]
 pub const ETAHEN_DPI_PORT: u16 = 12800;
+#[allow(dead_code)]
 pub const ETAHEN_SOCKET_PORT: u16 = 9090;
 pub const PS5_FTP_PORT: u16 = 2121;
 
@@ -55,57 +57,29 @@ impl FtpPayloadInjector {
 
     /// Fallback para enviar payload o comando a etaHEN DPI (:12800 / :9090)
     pub async fn send_via_etahen(ps5_ip: &str, _elf_bytes: &[u8]) -> Result<String, ToolyError> {
-        // En etaHEN, se puede activar el servidor FTP o enviar un payload a través del endpoint HTTP /install o /payload
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_millis(2000))
-            .build()
-            .map_err(|e| ToolyError::PayloadInjectionError(e.to_string()))?;
-
-        // 1. Probar HTTP 12800 /payload o /start_ftp
-        let urls = [
-            format!("http://{ps5_ip}:{ETAHEN_DPI_PORT}/start_ftp"),
-            format!("http://{ps5_ip}:{ETAHEN_DPI_PORT}/payload"),
-        ];
-
-        for url in urls {
-            if let Ok(res) = client.get(&url).send().await {
-                if res.status().is_success() {
-                    return Ok(format!("etaHEN HTTP ({url})"));
-                }
-            }
-        }
-
-        // 2. Probar socket 9090 con comando JSON
-        let ip_addr = IpAddr::from_str(ps5_ip)
+        let _ = IpAddr::from_str(ps5_ip)
             .map_err(|e| ToolyError::InvalidInput(format!("IP inválida '{ps5_ip}': {e}")))?;
-        let addr = SocketAddr::new(ip_addr, ETAHEN_SOCKET_PORT);
 
-        if let Ok(Ok(mut stream)) = timeout(Duration::from_millis(1500), TcpStream::connect(addr)).await {
-            let cmd = serde_json::json!({ "action": "start_ftp" }).to_string();
-            if stream.write_all(cmd.as_bytes()).await.is_ok() {
-                let _ = stream.flush().await;
-                let _ = stream.shutdown().await;
-                return Ok(format!("etaHEN Socket ({}:{})", ps5_ip, ETAHEN_SOCKET_PORT));
-            }
-        }
-
+        // etaHEN en puerto 12800 es un servidor HTTP DPI (instalador de PKGs) y en 9090 es un socket IPC.
+        // No proporciona un endpoint documentado para la inyección de binarios ELF arbitrarios ni
+        // para el arranque remoto del daemon FTP. Por tanto, evitamos falsos positivos y retornamos error.
         Err(ToolyError::PayloadInjectionError(
-            "etaHEN no respondió en puerto 12800 ni 9090".to_string(),
+            "etaHEN no dispone de una API documentada para inyección de binarios ELF o inicio remoto de FTP".to_string(),
         ))
     }
 
-    /// Espera y sondea si el puerto FTP (:2121) se abre dentro de max_wait_secs
-    pub async fn poll_ftp_active(ps5_ip: &str, max_wait_secs: u64) -> bool {
+    /// Espera y sondea si un puerto específico se abre dentro de max_wait_secs
+    pub async fn poll_port_active(ps5_ip: &str, port: u16, max_wait_secs: u64) -> bool {
         let ip_addr = match std::net::Ipv4Addr::from_str(ps5_ip) {
             Ok(v4) => v4,
             Err(_) => return false,
         };
 
-        let poll_interval = Duration::from_millis(400);
-        let max_attempts = (max_wait_secs * 1000) / 400;
+        let poll_interval = Duration::from_millis(300);
+        let max_attempts = ((max_wait_secs * 1000) / 300).max(1);
 
         for _ in 0..max_attempts {
-            if DiscoveryService::probe_port(ip_addr, PS5_FTP_PORT, Duration::from_millis(300)).await {
+            if DiscoveryService::probe_port(ip_addr, port, Duration::from_millis(250)).await {
                 return true;
             }
             tokio::time::sleep(poll_interval).await;
@@ -114,24 +88,35 @@ impl FtpPayloadInjector {
         false
     }
 
+    /// Espera y sondea si el puerto FTP (:2121) se abre dentro de max_wait_secs
+    pub async fn poll_ftp_active(ps5_ip: &str, max_wait_secs: u64) -> bool {
+        Self::poll_port_active(ps5_ip, PS5_FTP_PORT, max_wait_secs).await
+    }
+
     /// Orquesta la inyección completa con estrategia dual y verificación de puerto FTP (:2121)
     pub async fn inject_and_verify_ftp(ps5_ip: &str) -> Result<FtpInjectionResult, ToolyError> {
         let payload = Self::get_embedded_ftpsrv_bytes();
-
-        let mut method_used = String::new();
         let mut last_error = None;
 
-        // Estrategia 1: Probar puerto 9020 (ELF Loader estándar / kstuff)
-        if Self::send_elf_socket(ps5_ip, ELF_LOADER_PORT_9020, payload, 1500).await.is_ok() {
-            method_used = format!("ELF Loader ({ELF_LOADER_PORT_9020})");
-        } else if Self::send_elf_socket(ps5_ip, ELF_LOADER_PORT_9021, payload, 1500).await.is_ok() {
-            // Estrategia 2: Probar puerto 9021 (ELF Loader alternativo)
-            method_used = format!("ELF Loader ({ELF_LOADER_PORT_9021})");
-        } else {
-            // Estrategia 3 (Fallback): Probar vía etaHEN API / Socket
-            match Self::send_via_etahen(ps5_ip, payload).await {
-                Ok(method) => {
-                    method_used = method;
+        // Estrategia 1 & 2: Probar puertos de ELF Loader (9020 y 9021)
+        for &port in &[ELF_LOADER_PORT_9020, ELF_LOADER_PORT_9021] {
+            match Self::send_elf_socket(ps5_ip, port, payload, 1500).await {
+                Ok(()) => {
+                    // Dar tiempo a ftpsrv para inicializarse (hasta 3s)
+                    if Self::poll_ftp_active(ps5_ip, 3).await {
+                        let method = format!("ELF Loader ({port})");
+                        return Ok(FtpInjectionResult {
+                            success: true,
+                            method_used: method.clone(),
+                            ftp_verified: true,
+                            message: format!("Servidor FTP iniciado y verificado exitosamente vía {method}"),
+                        });
+                    } else {
+                        last_error = Some(ToolyError::PayloadInjectionError(format!(
+                            "Payload enviado a ELF Loader ({port}), pero el puerto FTP 2121 no respondió"
+                        )));
+                        // Continuar al siguiente puerto/método si no verificó FTP
+                    }
                 }
                 Err(err) => {
                     last_error = Some(err);
@@ -139,26 +124,32 @@ impl FtpPayloadInjector {
             }
         }
 
-        if method_used.is_empty() {
-            let err_msg = last_error
-                .map(|e| e.to_string())
-                .unwrap_or_else(|| "Puertos 9020, 9021 y etaHEN cerrados o inalcanzables".to_string());
-            return Err(ToolyError::PayloadInjectionError(err_msg));
+        // Estrategia 3 (Fallback): Probar vía etaHEN si los anteriores no lograron verificar FTP
+        match Self::send_via_etahen(ps5_ip, payload).await {
+            Ok(method) => {
+                let ftp_verified = Self::poll_ftp_active(ps5_ip, 3).await;
+                return Ok(FtpInjectionResult {
+                    success: ftp_verified,
+                    method_used: method.clone(),
+                    ftp_verified,
+                    message: if ftp_verified {
+                        format!("Servidor FTP iniciado y verificado exitosamente vía {method}")
+                    } else {
+                        format!("Payload enviado vía {method}, pero el puerto FTP 2121 aún no respondió")
+                    },
+                });
+            }
+            Err(err) => {
+                if last_error.is_none() {
+                    last_error = Some(err);
+                }
+            }
         }
 
-        // Verificar que el servidor FTP (:2121) realmente responde
-        let ftp_verified = Self::poll_ftp_active(ps5_ip, 4).await;
-
-        Ok(FtpInjectionResult {
-            success: true,
-            method_used: method_used.clone(),
-            ftp_verified,
-            message: if ftp_verified {
-                format!("Servidor FTP iniciado y verificado exitosamente vía {method_used}")
-            } else {
-                format!("Payload enviado vía {method_used}, pero el puerto FTP 2121 aún no respondió")
-            },
-        })
+        let err_msg = last_error
+            .map(|e| e.to_string())
+            .unwrap_or_else(|| "Puertos ELF Loader (9020, 9021) y fallback cerrados o inalcanzables".to_string());
+        Err(ToolyError::PayloadInjectionError(err_msg))
     }
 }
 
@@ -208,10 +199,15 @@ mod tests {
     #[tokio::test]
     async fn test_poll_ftp_active_detects_active_port() {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let _port = listener.local_addr().unwrap().port();
+        let port = listener.local_addr().unwrap().port();
 
-        // Si sondeamos un puerto inexistente debe dar false rápidamente
-        let inactive = FtpPayloadInjector::poll_ftp_active("127.0.0.1", 1).await;
-        assert!(!inactive, "Debe ser false si el puerto 2121 no está escuchando");
+        // Probar que el helper detecta el listener activo
+        let active = FtpPayloadInjector::poll_port_active("127.0.0.1", port, 1).await;
+        assert!(active, "Debe detectar el puerto activo como true");
+
+        // Cerrar el listener y verificar que detecta el puerto inactivo
+        drop(listener);
+        let inactive = FtpPayloadInjector::poll_port_active("127.0.0.1", port, 1).await;
+        assert!(!inactive, "Debe detectar el puerto cerrado como false");
     }
 }

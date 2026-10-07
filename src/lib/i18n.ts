@@ -61,6 +61,7 @@ export const translations = {
     logInjectingFtp: (ip: string) => `Injecting ftpsrv payload to PS5 at ${ip}...`,
     logFtpInjectSuccess: (method: string) => `FTP daemon started successfully via ${method}.`,
     logFtpInjectFailed: (err: string) => `Failed to launch FTP daemon: ${err}`,
+    logAutoStartFtp: (ip: string) => `Auto-Payload active: automatically starting FTP daemon at ${ip}...`,
 
     // Right Panel: Apps & Updates
     installedAppsTitle: "Installed Apps & Updates",
@@ -175,6 +176,7 @@ export const translations = {
     logInjectingFtp: (ip: string) => `Inyectando payload ftpsrv a la PS5 en ${ip}...`,
     logFtpInjectSuccess: (method: string) => `Servidor FTP iniciado exitosamente mediante ${method}.`,
     logFtpInjectFailed: (err: string) => `Fallo al encender servidor FTP: ${err}`,
+    logAutoStartFtp: (ip: string) => `Auto-Payload activo: iniciando automáticamente el daemon FTP en ${ip}...`,
 
     // Right Panel: Apps & Updates
     installedAppsTitle: "Aplicaciones Instaladas & Actualizaciones",

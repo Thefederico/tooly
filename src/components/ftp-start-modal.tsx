@@ -46,6 +46,7 @@ export function FtpStartModal({ onConfirm }: FtpStartModalProps) {
           <button
             onClick={closeFtpStartModal}
             disabled={modal.isInjecting}
+            aria-label={t.ftpCancel}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition disabled:opacity-40"
           >
             <X className="w-4 h-4" />
