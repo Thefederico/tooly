@@ -242,3 +242,7 @@ $RECYCLE.BIN/
 .kiro/
 .gitnexus/
 ARCHIVE_ORG_UPDATES_PLAN.md
+
+# Video generation outputs
+*.mp4
+video/out/

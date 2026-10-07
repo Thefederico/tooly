@@ -1,0 +1,21 @@
+{
+  "name": "tooly-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test scripts/*.test.js",
+    "capture": "node scripts/capture.js",
+    "render": "remotion render src/index.ts Promo16x9 out/tooly-16x9.mp4 && remotion render src/index.ts Promo9x16 out/tooly-9x16.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.534",
+    "playwright": "^1.63.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}
