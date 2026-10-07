@@ -182,8 +182,18 @@ export function AppGrid({
                             ? t.installingBtn
                             : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".pkg"))
                             ? t.updateBtn
-                            : "ZIP Release"}
+                            : t.zipRelease}
                         </span>
+                      </button>
+                    )}
+
+                    {hasUpdate && !state?.latestRelease && state?.archiveUpdates && state.archiveUpdates.length > 0 && (
+                      <button
+                        onClick={() => onOpenArchiveModal(app)}
+                        className="btn-ps-primary px-3.5 py-1.5 text-xs gap-1.5"
+                      >
+                        <DownloadCloud className="w-3.5 h-3.5" />
+                        <span>{t.updateBtn}</span>
                       </button>
                     )}
                   </div>

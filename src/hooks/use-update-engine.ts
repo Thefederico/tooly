@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import registryData from "../data/registry.json";
 import { useAppStore, AppUpdateStatus } from "../stores/use-app-store";
 import { tauriApi } from "../lib/tauri-client";
@@ -8,6 +8,7 @@ import { InstalledApp, RegistryItem, formatToolyError } from "../lib/types";
 const registry = registryData as RegistryItem[];
 
 export function useUpdateEngine() {
+  const scanGenerationRef = useRef(0);
   const lang = useAppStore((state) => state.lang);
   const ps5Ip = useAppStore((state) => state.ps5Ip);
   const installedApps = useAppStore((state) => state.installedApps);
@@ -60,6 +61,7 @@ export function useUpdateEngine() {
   // Evaluate updates against GitHub Releases & Archive.org
   const evaluateUpdates = useCallback(
     async (apps: InstalledApp[]) => {
+      const currentGen = ++scanGenerationRef.current;
       const stateMap: Record<string, AppUpdateStatus> = {};
       const repoMap: Map<string, { app: InstalledApp; reg: RegistryItem }> = new Map();
 
@@ -148,6 +150,7 @@ export function useUpdateEngine() {
           tauriApi
             .searchArchiveUpdates(app.title_id, app.app_name, app.app_ver)
             .then((archiveItems) => {
+              if (currentGen !== scanGenerationRef.current) return;
               if (archiveItems && archiveItems.length > 0) {
                 setUpdatesState((prev) => {
                   const current = prev[app.title_id] || {
@@ -271,7 +274,7 @@ export function useUpdateEngine() {
           addLog(
             `[Homebrew ZIP] ${item.installed?.app_name || titleId} (${item.latestRelease.tag_name}) se distribuye como paquete ZIP (${zipAsset.name}). Abriendo descarga directa para /data/homebrew/...`
           );
-          window.open(zipAsset.browser_download_url, "_blank");
+          window.open(zipAsset.browser_download_url, "_blank", "noopener,noreferrer");
           return;
         }
 
@@ -293,6 +296,7 @@ export function useUpdateEngine() {
         addLog(res.message);
       } catch (err: unknown) {
         addLog(formatToolyError(err));
+        setProgressState(null);
       } finally {
         setUpdatingId(null);
       }

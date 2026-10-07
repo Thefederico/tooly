@@ -1,10 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAppStore } from "../stores/use-app-store";
 import { tauriApi } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
 import { formatToolyError } from "../lib/types";
 
 export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
+  const autoScanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lang = useAppStore((state) => state.lang);
   const ps5Ip = useAppStore((state) => state.ps5Ip);
   const setPs5Ip = useAppStore((state) => state.setPs5Ip);
@@ -25,6 +26,14 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
 
   const t = translations[lang];
 
+  useEffect(() => {
+    return () => {
+      if (autoScanTimerRef.current) {
+        clearTimeout(autoScanTimerRef.current);
+      }
+    };
+  }, []);
+
   // Discover PS5 consoles via UDP / Port probing
   const discoverPs5 = useCallback(async () => {
     setIsDiscovering(true);
@@ -39,7 +48,10 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
         addLog(t.logDiscoveredSuccess(discovered.length, selected.ip));
 
         if (selected.ftp_open && onAutoScanRequest) {
-          setTimeout(() => {
+          if (autoScanTimerRef.current) {
+            clearTimeout(autoScanTimerRef.current);
+          }
+          autoScanTimerRef.current = setTimeout(() => {
             onAutoScanRequest(selected.ip);
           }, 300);
         }
@@ -49,7 +61,7 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
         return null;
       }
     } catch (err: unknown) {
-      addLog(`Error en auto-descubrimiento LAN: ${formatToolyError(err)}`);
+      addLog(t.logDiscoveryError(formatToolyError(err)));
       return null;
     } finally {
       setIsDiscovering(false);
