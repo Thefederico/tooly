@@ -22,6 +22,11 @@ import {
   ArrowUpCircle,
   ExternalLink,
   Database,
+  ChevronDown,
+  ChevronUp,
+  Gamepad2,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { ArchiveUpdatesModal } from "./archive-updates-modal";
 import { ArchiveOrgGameUpdate } from "../lib/types";
@@ -47,10 +52,12 @@ export function Dashboard() {
   };
 
   const [ps5Ip, setPs5Ip] = useState("192.168.1.100");
+  const [showManualIp, setShowManualIp] = useState(false);
   const [payloadDir, setPayloadDir] = useState("");
   const [isScanningFtp, setIsScanningFtp] = useState(false);
   const [isScanningPayloads, setIsScanningPayloads] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
+  const [hasDiscoveredConsole, setHasDiscoveredConsole] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
@@ -112,12 +119,17 @@ export function Dashboard() {
     }
   };
 
-  // Auto-comprobación pasiva de versión de Tooly al cargar
+  // Auto-comprobación pasiva de versión de Tooly y auto-detección pasiva de consola LAN al montar
   useEffect(() => {
     handleCheckAppUpdate(true);
+    // Auto-detección pasiva en arranque para experiencia Zero-Config
+    const autoScanTimer = setTimeout(() => {
+      handleDiscoverPs5();
+    }, 600);
+    return () => clearTimeout(autoScanTimer);
   }, []);
 
-  // Auto-descubrimiento en subred LAN
+  // Auto-descubrimiento en subred LAN (Flujo Principal)
   const handleDiscoverPs5 = async () => {
     setIsDiscovering(true);
     addLog(t.logDiscovering);
@@ -128,8 +140,9 @@ export function Dashboard() {
       if (discovered.length > 0) {
         const selected = discovered[0];
         setPs5Ip(selected.ip);
+        setHasDiscoveredConsole(true);
         addLog(t.logDiscoveredSuccess(discovered.length, selected.ip));
-        // Opcional: auto-disparar escaneo si FTP está abierto
+        // Auto-disparar escaneo de aplicaciones si FTP está abierto
         if (selected.ftp_open) {
           setTimeout(() => {
             handleScanPs5WithIp(selected.ip);
@@ -555,57 +568,124 @@ export function Dashboard() {
       <main className="p-5 max-w-7xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-0 overflow-hidden">
         {/* Left Column: Console Connect & Local Directory (4 cols) */}
         <section className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1">
-          {/* Box 1: PS5 Connection Card */}
-          <div className="glass-panel rounded-2xl p-4.5 flex flex-col gap-3.5 shrink-0">
+          {/* Box 1: PS5 Connection Card (Radar Auto-Detect First) */}
+          <div className="glass-panel rounded-2xl p-4.5 flex flex-col gap-3.5 shrink-0 relative overflow-hidden border border-cyan-500/20">
+            {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Wifi className="w-4 h-4 text-cyan-400" />
                 <h2 className="font-semibold text-sm tracking-wide text-slate-200">{t.ps5Console}</h2>
               </div>
-              <span className="text-[10px] text-slate-400 font-mono">{t.etaHenTarget}</span>
+              <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                <span className={`w-1.5 h-1.5 rounded-full ${hasDiscoveredConsole ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}></span>
+                <span className={hasDiscoveredConsole ? "text-emerald-400 font-medium" : "text-slate-400"}>
+                  {hasDiscoveredConsole ? t.consoleFoundStatus : t.consoleNotFoundStatus}
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            {/* HERO CTA: Radar Auto-Detection Button */}
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 rounded-xl blur-xs opacity-50 group-hover:opacity-100 transition duration-300"></div>
+              <button
+                onClick={handleDiscoverPs5}
+                disabled={isDiscovering || isScanningFtp}
+                title={t.autoDetectTooltip}
+                className="relative w-full py-3 px-4 bg-slate-950/90 hover:bg-slate-900 border border-cyan-400/50 rounded-xl flex items-center justify-between transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left shadow-[0_0_20px_rgba(0,240,255,0.15)] group-hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0">
+                    <Radar className={`w-4 h-4 text-cyan-400 ${isDiscovering ? "animate-spin text-cyan-300" : "group-hover:scale-110 transition-transform"}`} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white tracking-wide flex items-center gap-2">
+                      <span>{isDiscovering ? t.autoDetectRadarScanning : t.autoDetectRadarBtn}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono">
+                      {t.autoDetectRadarSubtext}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+                    LAN :24
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Target Console State Card */}
+            <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800/80 flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs text-slate-400 font-medium">{t.consoleIpLabel}</label>
-                <button
-                  onClick={handleDiscoverPs5}
-                  disabled={isDiscovering || isScanningFtp}
-                  title={t.autoDetectTooltip}
-                  className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 disabled:opacity-50 cursor-pointer transition-colors"
-                >
-                  <Radar className={`w-3.5 h-3.5 ${isDiscovering ? "animate-spin text-cyan-300" : ""}`} />
-                  <span>{isDiscovering ? t.autoDetecting : t.autoDetect}</span>
-                </button>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="text"
-                  value={ps5Ip}
-                  onChange={(e) => setPs5Ip(e.target.value)}
-                  placeholder="192.168.1.xxx"
-                  className="flex-1 bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs font-mono text-cyan-300 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all shadow-inner"
-                />
+                <div className="flex items-center gap-2">
+                  <Gamepad2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span className="text-xs font-mono font-semibold text-cyan-300 tracking-wider">
+                    {ps5Ip || "192.168.1.xxx"}
+                  </span>
+                </div>
+
                 <button
                   onClick={handleScanPs5}
-                  disabled={isScanningFtp || isDiscovering}
-                  className="w-32 py-2.5 px-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_16px_rgba(0,112,209,0.35)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  disabled={isScanningFtp || isDiscovering || !ps5Ip}
+                  className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(0,112,209,0.35)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isScanningFtp ? t.scanning : t.scan}</span>
+                  <RefreshCw className={`w-3 h-3 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
+                  <span>{isScanningFtp ? t.scanning : t.scan}</span>
                 </button>
+              </div>
+
+              {/* Status footer with apps count */}
+              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60 font-mono">
+                <div className="flex items-center gap-1.5">
+                  <span>{t.appsDetected}</span>
+                  <span className="text-cyan-400 font-bold">{installedApps.length}</span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                  <span>/user/app</span>
+                  <span>•</span>
+                  <span>/data</span>
+                </div>
               </div>
             </div>
 
-            <div className="bg-slate-950/50 rounded-xl p-2.5 border border-slate-800/80 text-[11px] flex flex-col gap-1.5 text-slate-400">
-              <div className="flex justify-between">
-                <span>{t.appsDetected}</span>
-                <span className="font-mono text-cyan-400 font-bold">{installedApps.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t.scannedPaths}</span>
-                <span className="font-mono text-slate-300">/user/app, /data</span>
-              </div>
+            {/* Collapsible Manual IP Override */}
+            <div className="pt-0.5">
+              <button
+                onClick={() => setShowManualIp(!showManualIp)}
+                className="flex items-center justify-between w-full text-[11px] text-slate-400 hover:text-slate-300 py-1 px-1 transition-colors cursor-pointer group"
+              >
+                <span className="group-hover:text-cyan-400 font-mono text-[10px] transition-colors">
+                  {t.manualIpToggle}
+                </span>
+                {showManualIp ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-400" />
+                )}
+              </button>
+
+              {showManualIp && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={ps5Ip}
+                    onChange={(e) => setPs5Ip(e.target.value)}
+                    placeholder="192.168.1.xxx"
+                    className="flex-1 bg-slate-950/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all shadow-inner"
+                  />
+                  <button
+                    onClick={() => {
+                      setHasDiscoveredConsole(true);
+                      handleScanPs5();
+                    }}
+                    disabled={isScanningFtp || !ps5Ip.trim()}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-medium rounded-xl text-xs transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    OK
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
