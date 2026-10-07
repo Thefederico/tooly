@@ -166,61 +166,78 @@ export function Dashboard() {
     await handleScanPs5WithIp(ps5Ip);
   };
 
-  // Comparar con GitHub Releases
+  // Comparar con GitHub Releases con batching concurrente y caché TTL
   const evaluateUpdates = async (apps: InstalledApp[]) => {
     const stateMap: Record<string, AppUpdateStatus> = {};
+    const repoMap: Map<string, { app: InstalledApp; reg: RegistryItem }> = new Map();
 
+    // 1. Mapear apps registradas que tienen repositorio en GitHub
     for (const app of apps) {
       const reg = registry.find((r) => r.titleId?.toUpperCase() === app.title_id.toUpperCase());
       if (reg && reg.githubRepo) {
-        addLog(t.logCheckingGithub(reg.name, reg.githubRepo));
-        try {
-          const rel = await tauriApi.checkGitHubUpdate(reg.githubRepo);
-          const currentClean = app.app_ver.replace(/^[vV]/, "").trim();
-          const latestClean = rel.tag_name.replace(/^[vV]/, "").trim();
-
-          const hasCompatibleAsset = rel.assets && rel.assets.some((a) => {
-            if (reg.assetPattern) {
-              try {
-                return new RegExp(reg.assetPattern, "i").test(a.name);
-              } catch (_) {}
-            }
-            return (
-              a.name.toLowerCase().endsWith(".pkg") ||
-              a.name.toLowerCase().endsWith(".bin") ||
-              a.name.toLowerCase().endsWith(".elf") ||
-              a.name.toLowerCase().endsWith(".zip")
-            );
-          });
-
-          const isNewer = currentClean !== latestClean;
-          const hasUpdate = isNewer && Boolean(hasCompatibleAsset);
-
-          stateMap[app.title_id] = {
-            installed: app,
-            registry: reg,
-            latestRelease: rel,
-            hasUpdate,
-            statusText: hasUpdate
-              ? `${t.updateAvailable} ${rel.tag_name}`
-              : isNewer && !hasCompatibleAsset
-              ? `${rel.tag_name} (Sin PKG/ZIP)`
-              : t.upToDateBadge,
-          };
-        } catch (e: any) {
-          stateMap[app.title_id] = {
-            installed: app,
-            registry: reg,
-            hasUpdate: false,
-            statusText: t.statusGithubError,
-          };
-        }
+        repoMap.set(reg.githubRepo.toLowerCase(), { app, reg });
       } else {
         stateMap[app.title_id] = {
           installed: app,
           hasUpdate: false,
           statusText: t.statusNoMapping,
         };
+      }
+    }
+
+    // 2. Ejecutar batching concurrente a través del backend de Rust con caché TTL
+    const uniqueRepos = Array.from(repoMap.keys());
+    if (uniqueRepos.length > 0) {
+      addLog(`Comprobando ${uniqueRepos.length} repositorios en GitHub (concurrencia y caché)...`);
+      try {
+        const batchResults = await tauriApi.checkBatchGitHubUpdates(uniqueRepos, 4);
+        const resultMap = new Map(batchResults);
+
+        for (const [repoKey, { app, reg }] of repoMap.entries()) {
+          const rel = resultMap.get(repoKey);
+          if (rel) {
+            const currentClean = app.app_ver.replace(/^[vV]/, "").trim();
+            const latestClean = rel.tag_name.replace(/^[vV]/, "").trim();
+
+            const hasCompatibleAsset = rel.assets && rel.assets.some((a) => {
+              if (reg.assetPattern) {
+                try {
+                  return new RegExp(reg.assetPattern, "i").test(a.name);
+                } catch (_) {}
+              }
+              return (
+                a.name.toLowerCase().endsWith(".pkg") ||
+                a.name.toLowerCase().endsWith(".bin") ||
+                a.name.toLowerCase().endsWith(".elf") ||
+                a.name.toLowerCase().endsWith(".zip")
+              );
+            });
+
+            const isNewer = currentClean !== latestClean;
+            const hasUpdate = isNewer && Boolean(hasCompatibleAsset);
+
+            stateMap[app.title_id] = {
+              installed: app,
+              registry: reg,
+              latestRelease: rel,
+              hasUpdate,
+              statusText: hasUpdate
+                ? `${t.updateAvailable} ${rel.tag_name}`
+                : isNewer && !hasCompatibleAsset
+                ? `${rel.tag_name} (Sin PKG/ZIP)`
+                : t.upToDateBadge,
+            };
+          } else {
+            stateMap[app.title_id] = {
+              installed: app,
+              registry: reg,
+              hasUpdate: false,
+              statusText: t.statusGithubError,
+            };
+          }
+        }
+      } catch (err) {
+        addLog(`Error en comprobación de actualizaciones por lote: ${err}`);
       }
     }
 

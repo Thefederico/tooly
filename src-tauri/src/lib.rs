@@ -50,6 +50,20 @@ async fn check_github_update(repo: String) -> Result<GitHubReleaseInfo, String> 
 }
 
 #[tauri::command]
+async fn check_batch_github_updates(
+    repos: Vec<String>,
+    concurrency: Option<usize>,
+) -> Result<Vec<(String, Option<GitHubReleaseInfo>)>, String> {
+    let limit = concurrency.unwrap_or(4);
+    let results = GitHubClient::check_batch_updates(repos, limit).await;
+    let serialized: Vec<(String, Option<GitHubReleaseInfo>)> = results
+        .into_iter()
+        .map(|(repo, res)| (repo, res.ok()))
+        .collect();
+    Ok(serialized)
+}
+
+#[tauri::command]
 async fn trigger_dpi_update(
     app: AppHandle,
     ps5_ip: String,
@@ -121,6 +135,7 @@ pub fn run() {
             scan_ps5_apps,
             scan_local_payloads,
             check_github_update,
+            check_batch_github_updates,
             trigger_dpi_update,
             check_app_update,
             search_archive_updates,

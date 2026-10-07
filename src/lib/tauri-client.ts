@@ -22,6 +22,16 @@ export const tauriApi = {
     return await invoke<GitHubReleaseInfo>("check_github_update", { repo });
   },
 
+  checkBatchGitHubUpdates: async (
+    repos: string[],
+    concurrency?: number
+  ): Promise<[string, GitHubReleaseInfo | null][]> => {
+    return await invoke<[string, GitHubReleaseInfo | null][]>("check_batch_github_updates", {
+      repos,
+      concurrency,
+    });
+  },
+
   triggerDpiUpdate: async (
     ps5Ip: string,
     downloadUrl: string,
