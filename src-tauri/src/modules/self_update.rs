@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const TOOLY_CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const TOOLY_DEFAULT_REPO: &str = "ToolyApp/tooly";
+pub const TOOLY_DEFAULT_REPO: &str = "Thefederico/tooly";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AppUpdateInfo {
@@ -180,6 +180,11 @@ mod tests {
     }
 
     #[test]
+    fn test_default_repo_is_thefederico_tooly() {
+        assert_eq!(TOOLY_DEFAULT_REPO, "Thefederico/tooly");
+    }
+
+    #[test]
     fn test_app_update_info_serialization() {
         let info = AppUpdateInfo {
             current_version: "0.1.0".to_string(),
@@ -189,7 +194,7 @@ mod tests {
             published_at: Some("2026-10-07T00:00:00Z".to_string()),
             download_url: Some("https://example.com/tooly.dmg".to_string()),
             asset_name: Some("tooly-0.2.0.dmg".to_string()),
-            html_url: Some("https://github.com/ToolyApp/tooly/releases/v0.2.0".to_string()),
+            html_url: Some("https://github.com/Thefederico/tooly/releases/v0.2.0".to_string()),
         };
 
         let json = serde_json::to_string(&info).unwrap();

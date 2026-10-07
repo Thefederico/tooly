@@ -445,7 +445,7 @@ export function Dashboard() {
               {/* Tooly App Self-Update Indicator */}
               {appUpdate?.has_update ? (
                 <a
-                  href={appUpdate.html_url || appUpdate.download_url || "https://github.com/ToolyApp/tooly/releases"}
+                  href={appUpdate.html_url || appUpdate.download_url || "https://github.com/Thefederico/tooly/releases"}
                   target="_blank"
                   rel="noreferrer"
                   title={`${t.toolyUpdateAvailable} ${appUpdate.latest_version}`}
