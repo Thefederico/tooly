@@ -51,6 +51,18 @@ interface AppStoreState {
   scanProgress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null;
   setScanProgress: (progress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null) => void;
 
+  // FTP Auto-Start & Modal
+  autoStartFtp: boolean;
+  setAutoStartFtp: (val: boolean) => void;
+  ftpStartModal: {
+    isOpen: boolean;
+    ip: string;
+    isInjecting: boolean;
+  };
+  openFtpStartModal: (ip: string) => void;
+  closeFtpStartModal: () => void;
+  setIsInjectingFtp: (val: boolean) => void;
+
   // Local Payloads
   payloadDir: string;
   setPayloadDir: (dir: string) => void;
@@ -121,6 +133,43 @@ export const useAppStore = create<AppStoreState>((set) => ({
   setActiveScanSession: (activeScanSession) => set({ activeScanSession }),
   scanProgress: null,
   setScanProgress: (scanProgress) => set({ scanProgress }),
+
+  // FTP Auto-Start & Modal
+  autoStartFtp: typeof window !== "undefined" ? localStorage.getItem("tooly_auto_start_ftp") === "true" : false,
+  setAutoStartFtp: (autoStartFtp) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tooly_auto_start_ftp", String(autoStartFtp));
+    }
+    set({ autoStartFtp });
+  },
+  ftpStartModal: {
+    isOpen: false,
+    ip: "",
+    isInjecting: false,
+  },
+  openFtpStartModal: (ip) =>
+    set({
+      ftpStartModal: {
+        isOpen: true,
+        ip,
+        isInjecting: false,
+      },
+    }),
+  closeFtpStartModal: () =>
+    set((state) => ({
+      ftpStartModal: {
+        ...state.ftpStartModal,
+        isOpen: false,
+        isInjecting: false,
+      },
+    })),
+  setIsInjectingFtp: (isInjecting) =>
+    set((state) => ({
+      ftpStartModal: {
+        ...state.ftpStartModal,
+        isInjecting,
+      },
+    })),
 
   // Local Payloads
   payloadDir: "",

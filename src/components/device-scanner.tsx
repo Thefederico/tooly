@@ -1,5 +1,4 @@
-import React from "react";
-import { Wifi, Radar, RefreshCw, Gamepad2, ChevronDown, ChevronUp, Folder } from "lucide-react";
+import { Wifi, Radar, RefreshCw, Gamepad2, ChevronDown, ChevronUp, Folder, Zap } from "lucide-react";
 import { useAppStore } from "../stores/use-app-store";
 import { translations } from "../lib/i18n";
 import { LocalPayload } from "../lib/types";
@@ -15,6 +14,8 @@ interface DeviceScannerProps {
   onDiscoverPs5: () => void;
   onScanPs5: () => void;
   appsCount: number;
+  onStartFtp?: () => void;
+  isStartingFtp?: boolean;
 
   // Local Payloads section
   payloadDir: string;
@@ -35,6 +36,8 @@ export function DeviceScanner({
   onDiscoverPs5,
   onScanPs5,
   appsCount,
+  onStartFtp,
+  isStartingFtp,
   payloadDir,
   onPayloadDirChange,
   isScanningPayloads,
@@ -109,14 +112,28 @@ export function DeviceScanner({
               </span>
             </div>
 
-            <button
-              onClick={onScanPs5}
-              disabled={isScanningFtp || isDiscovering || !ps5Ip}
-              className="btn-ps-primary px-3.5 py-1.5 text-xs gap-1.5 shrink-0"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
-              <span>{isScanningFtp ? t.scanning : t.scan}</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onStartFtp && (
+                <button
+                  onClick={onStartFtp}
+                  disabled={isStartingFtp || isScanningFtp || isDiscovering || !ps5Ip}
+                  title={t.ftpStartManualBtn}
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-cyan-400 border border-cyan-500/30 transition flex items-center gap-1 disabled:opacity-40"
+                >
+                  <Zap className={`w-3.5 h-3.5 ${isStartingFtp ? "animate-pulse fill-cyan-400" : ""}`} />
+                  <span className="hidden sm:inline">FTP</span>
+                </button>
+              )}
+
+              <button
+                onClick={onScanPs5}
+                disabled={isScanningFtp || isDiscovering || !ps5Ip}
+                className="btn-ps-primary px-3.5 py-1.5 text-xs gap-1.5 shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
+                <span>{isScanningFtp ? t.scanning : t.scan}</span>
+              </button>
+            </div>
           </div>
 
           {/* Status footer with apps count */}

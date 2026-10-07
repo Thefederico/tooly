@@ -7,6 +7,7 @@ use modules::ftp_scanner::{
     FtpScanner, InstalledApp, ScanCompletePayload, ScanErrorPayload, ScanProgressPayload,
     ScanSessionResponse,
 };
+use modules::ftp_injector::{FtpInjectionResult, FtpPayloadInjector};
 use modules::github::{GitHubClient, GitHubReleaseInfo};
 use modules::payloads::{LocalPayload, PayloadScanner};
 use std::collections::HashMap;
@@ -256,6 +257,11 @@ async fn check_app_update(repo: Option<String>) -> Result<modules::self_update::
         .map_err(ToolyError::GitHubError)
 }
 
+#[tauri::command]
+async fn start_ps5_ftp_server(ps5_ip: String) -> Result<FtpInjectionResult, ToolyError> {
+    FtpPayloadInjector::inject_and_verify_ftp(&ps5_ip).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let scan_manager = Arc::new(ScanManager::default());
@@ -275,7 +281,8 @@ pub fn run() {
             check_app_update,
             search_archive_updates,
             install_archive_update_direct,
-            update_payload_via_ftp
+            update_payload_via_ftp,
+            start_ps5_ftp_server
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

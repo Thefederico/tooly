@@ -50,6 +50,19 @@ export const translations = {
     copied: "Copied",
     copyLogsTooltip: "Copy all log entries to clipboard",
 
+    // FTP Auto-Start & Injection Modal
+    ftpServerInactiveModalTitle: "PS5 FTP Server Inactive",
+    ftpServerInactiveModalDesc: (ip: string) => `A PS5 console was detected at ${ip}, but its FTP daemon (:2121) is not running. Would you like Tooly to launch the ftpsrv payload now?`,
+    ftpLaunchButton: "Start FTP Server",
+    ftpLaunching: "Injecting Payload...",
+    ftpCancel: "Cancel",
+    ftpRememberAutoStart: "Remember decision and auto-start FTP in the future",
+    ftpStartManualBtn: "Start FTP Server",
+    logInjectingFtp: (ip: string) => `Injecting ftpsrv payload to PS5 at ${ip}...`,
+    logFtpInjectSuccess: (method: string) => `FTP daemon started successfully via ${method}.`,
+    logFtpInjectFailed: (err: string) => `Failed to launch FTP daemon: ${err}`,
+    logAutoStartFtp: (ip: string) => `Auto-Payload active: automatically starting FTP daemon at ${ip}...`,
+
     // Right Panel: Apps & Updates
     installedAppsTitle: "Installed Apps & Updates",
     installedAppsSubtitle: "Remote PARAM.SFO detection & direct sync with GitHub Releases",
@@ -151,6 +164,19 @@ export const translations = {
     copy: "Copiar",
     copied: "Copiado",
     copyLogsTooltip: "Copiar todo el registro al portapapeles",
+
+    // FTP Auto-Start & Injection Modal
+    ftpServerInactiveModalTitle: "Servidor FTP de PS5 Inactivo",
+    ftpServerInactiveModalDesc: (ip: string) => `Se detectó la consola PS5 en ${ip}, pero su daemon FTP (:2121) está apagado. ¿Deseas que Tooly inicie el payload ftpsrv automáticamente?`,
+    ftpLaunchButton: "Encender Servidor FTP",
+    ftpLaunching: "Inyectando Payload...",
+    ftpCancel: "Cancelar",
+    ftpRememberAutoStart: "Recordar decisión y encender FTP automáticamente en el futuro",
+    ftpStartManualBtn: "Encender Servidor FTP",
+    logInjectingFtp: (ip: string) => `Inyectando payload ftpsrv a la PS5 en ${ip}...`,
+    logFtpInjectSuccess: (method: string) => `Servidor FTP iniciado exitosamente mediante ${method}.`,
+    logFtpInjectFailed: (err: string) => `Fallo al encender servidor FTP: ${err}`,
+    logAutoStartFtp: (ip: string) => `Auto-Payload activo: iniciando automáticamente el daemon FTP en ${ip}...`,
 
     // Right Panel: Apps & Updates
     installedAppsTitle: "Aplicaciones Instaladas & Actualizaciones",

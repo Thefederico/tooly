@@ -7,3 +7,4 @@ pub mod dpi;
 pub mod discovery;
 pub mod self_update;
 pub mod archive_org;
+pub mod ftp_injector;

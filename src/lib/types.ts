@@ -65,6 +65,14 @@ export interface DiscoveredPs5 {
   ip: string;
   ftp_open: boolean;
   dpi_open: boolean;
+  elf_loader_open?: boolean;
+}
+
+export interface FtpInjectionResult {
+  success: boolean;
+  method_used: string;
+  ftp_verified: boolean;
+  message: string;
 }
 
 export interface AppUpdateInfo {
@@ -123,6 +131,7 @@ export type ToolyError =
   | { type: "DpiError"; message: string }
   | { type: "GitHubError"; message: string }
   | { type: "ArchiveOrgError"; message: string }
+  | { type: "PayloadInjectionError"; message: string }
   | { type: "InvalidInput"; message: string }
   | { type: "InternalError"; message: string }
   | { type: "IoError"; message: string };
@@ -134,6 +143,8 @@ export function formatToolyError(err: unknown): string {
   if (typeof err === "object" && "type" in err) {
     const te = err as ToolyError;
     switch (te.type) {
+      case "PayloadInjectionError":
+        return `Error inyectando payload en PS5: ${te.message}`;
       case "FtpTimeout":
         return `Timeout conectando a PS5 FTP (${te.message.ip}:${te.message.port}) tras ${te.message.seconds}s.`;
       case "FtpError":
