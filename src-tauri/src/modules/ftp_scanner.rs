@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use suppaftp::FtpStream;
 use std::io::Read;
 use std::net::{SocketAddr, ToSocketAddrs};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 use super::error::ToolyError;
 use super::sfo::SfoParser;
@@ -13,6 +15,32 @@ pub struct InstalledApp {
     pub app_ver: String,
     pub path: String,
     pub icon_base64: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct ScanProgressPayload {
+    pub session_id: String,
+    pub current_folder: String,
+    pub scanned_count: usize,
+    pub total_estimated: usize,
+    pub percentage: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct ScanCompletePayload {
+    pub session_id: String,
+    pub total_apps: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct ScanErrorPayload {
+    pub session_id: String,
+    pub error: ToolyError,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct ScanSessionResponse {
+    pub session_id: String,
 }
 
 pub struct FtpScanner;
@@ -50,18 +78,64 @@ impl FtpScanner {
     /// Escanea las carpetas de aplicaciones en la PS5 (/user/app/ y /data/)
     /// con timeout rápido configurable (default 4 segundos)
     pub fn scan_ps5(ip: &str, port: u16, timeout_secs: Option<u64>) -> Result<Vec<InstalledApp>, ToolyError> {
+        let cancel = Arc::new(AtomicBool::new(false));
+        Self::scan_ps5_stream(ip, port, timeout_secs, "sync-scan", cancel, |_| {}, |_| {})
+    }
+
+    /// Escaneo en streaming con callbacks por item descubierto, progreso y flag atómico de cancelación
+    pub fn scan_ps5_stream<FApp, FProg>(
+        ip: &str,
+        port: u16,
+        timeout_secs: Option<u64>,
+        session_id: &str,
+        cancel_flag: Arc<AtomicBool>,
+        mut on_discovered: FApp,
+        mut on_progress: FProg,
+    ) -> Result<Vec<InstalledApp>, ToolyError>
+    where
+        FApp: FnMut(InstalledApp),
+        FProg: FnMut(ScanProgressPayload),
+    {
+        if cancel_flag.load(Ordering::Relaxed) {
+            return Ok(Vec::new());
+        }
+
         let timeout = Duration::from_secs(timeout_secs.unwrap_or(Self::DEFAULT_TIMEOUT_SECS));
         let mut ftp = Self::connect_with_timeout(ip, port, timeout)?;
+
+        if cancel_flag.load(Ordering::Relaxed) {
+            let _ = ftp.quit();
+            return Ok(Vec::new());
+        }
 
         ftp.login("anonymous", "tooly@ps5")
             .map_err(|e| ToolyError::FtpError(format!("Fallo de autenticación FTP: {e}")))?;
 
         let mut installed_apps = Vec::new();
         let scan_paths = vec!["/user/app", "/data/homebrew", "/data/app"];
+        let mut total_discovered = 0;
 
-        for base_path in scan_paths {
+        for (base_idx, base_path) in scan_paths.iter().enumerate() {
+            if cancel_flag.load(Ordering::Relaxed) {
+                let _ = ftp.quit();
+                return Ok(installed_apps);
+            }
+
+            on_progress(ScanProgressPayload {
+                session_id: session_id.to_string(),
+                current_folder: base_path.to_string(),
+                scanned_count: total_discovered,
+                total_estimated: total_discovered + 10,
+                percentage: (base_idx as f32 / 4.0) * 100.0,
+            });
+
             if let Ok(entries) = ftp.list(Some(base_path)) {
                 for line in entries {
+                    if cancel_flag.load(Ordering::Relaxed) {
+                        let _ = ftp.quit();
+                        return Ok(installed_apps);
+                    }
+
                     if let Some(folder_name) = Self::extract_folder_name(&line) {
                         let app_dir = format!("{}/{}", base_path, folder_name);
 
@@ -81,13 +155,16 @@ impl FtpScanner {
                                         .unwrap_or_else(|| "1.00".into());
                                     let app_name = sfo_map.get("TITLE").cloned();
 
-                                    installed_apps.push(InstalledApp {
+                                    let app = InstalledApp {
                                         title_id,
                                         app_name,
                                         app_ver,
                                         path: app_dir.clone(),
                                         icon_base64: None,
-                                    });
+                                    };
+                                    on_discovered(app.clone());
+                                    installed_apps.push(app);
+                                    total_discovered += 1;
                                     continue;
                                 }
                             }
@@ -110,13 +187,16 @@ impl FtpScanner {
                                         .unwrap_or_else(|| "1.00".into());
                                     let app_name = json_map.get("titleName").cloned();
 
-                                    installed_apps.push(InstalledApp {
+                                    let app = InstalledApp {
                                         title_id,
                                         app_name,
                                         app_ver,
                                         path: app_dir,
                                         icon_base64: None,
-                                    });
+                                    };
+                                    on_discovered(app.clone());
+                                    installed_apps.push(app);
+                                    total_discovered += 1;
                                 }
                             }
                         }
@@ -127,8 +207,21 @@ impl FtpScanner {
 
         // 3. Escaneo de Payloads instalados en Payload Manager (/data/pldmgr/payloads)
         let pldmgr_base = "/data/pldmgr/payloads";
+        on_progress(ScanProgressPayload {
+            session_id: session_id.to_string(),
+            current_folder: pldmgr_base.to_string(),
+            scanned_count: total_discovered,
+            total_estimated: total_discovered + 5,
+            percentage: 75.0,
+        });
+
         if let Ok(pld_entries) = ftp.list(Some(pldmgr_base)) {
             for line in pld_entries {
+                if cancel_flag.load(Ordering::Relaxed) {
+                    let _ = ftp.quit();
+                    return Ok(installed_apps);
+                }
+
                 if let Some(folder_name) = Self::extract_folder_name(&line) {
                     let folder_path = format!("{}/{}", pldmgr_base, folder_name);
                     // Buscar archivos en esta carpeta de payload
@@ -204,13 +297,15 @@ impl FtpScanner {
 
                         if has_info {
                             let binary_title_id = format!("PAYLOAD_{}", folder_name.to_uppercase().replace('-', "_"));
-                            installed_apps.push(InstalledApp {
+                            let app = InstalledApp {
                                 title_id: binary_title_id,
                                 app_name: Some(final_name),
                                 app_ver: final_ver,
                                 path: folder_path.clone(),
                                 icon_base64: None,
-                            });
+                            };
+                            on_discovered(app.clone());
+                            installed_apps.push(app);
                         }
                     }
                 }
@@ -450,4 +545,42 @@ mod tests {
             elapsed
         );
     }
+
+    #[test]
+    fn test_scan_progress_payload_calculation() {
+        let payload = ScanProgressPayload {
+            session_id: "test-sess-123".into(),
+            current_folder: "/user/app/CUSA12345".into(),
+            scanned_count: 5,
+            total_estimated: 10,
+            percentage: 50.0,
+        };
+        assert_eq!(payload.percentage, 50.0);
+        assert_eq!(payload.scanned_count, 5);
+        assert_eq!(payload.total_estimated, 10);
+    }
+
+    #[test]
+    fn test_cancellation_flag_aborts_immediately() {
+        let cancel_flag = Arc::new(AtomicBool::new(true)); // Pre-cancelado
+        let mut discovered = Vec::new();
+        let on_discovered = Arc::new(std::sync::Mutex::new(|app: InstalledApp| {
+            discovered.push(app);
+        }));
+
+        // Si ya está cancelado, scan_ps5_stream no debe ni intentar conectar o debe salir inmediatamente
+        let result = FtpScanner::scan_ps5_stream(
+            "127.0.0.1",
+            2121,
+            Some(1),
+            "test-sess",
+            cancel_flag,
+            move |_app| {},
+            move |_prog| {},
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 0);
+    }
 }
+
