@@ -1,0 +1,55 @@
+name: Update Registry via Webhook
+
+on:
+  repository_dispatch:
+    types: [update_app_version]
+
+jobs:
+  update-registry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update registry.json
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = './src/data/registry.json';
+            
+            // Expected payload from the developer's webhook
+            // { "app_id": "mi-app", "version": "1.2.0", "url": "https://dl.dominio.com/app.pkg", "notes": "Bug fixes" }
+            const payload = context.payload.client_payload;
+            
+            if (!payload.app_id || !payload.version || !payload.url) {
+              core.setFailed("Missing required fields in payload (app_id, version, url)");
+              return;
+            }
+
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const appIndex = data.findIndex(app => app.id === payload.app_id);
+
+            if (appIndex === -1) {
+              core.setFailed(`App with ID ${payload.app_id} not found in registry.`);
+              return;
+            }
+
+            // Update the fields
+            data[appIndex].version = payload.version;
+            data[appIndex].directUrl = payload.url;
+            if (payload.notes) {
+              data[appIndex].releaseNotes = payload.notes;
+            }
+
+            fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
+            core.info(`Updated ${payload.app_id} to version ${payload.version}`);
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(registry): Auto-update app version via webhook"
+          git push
