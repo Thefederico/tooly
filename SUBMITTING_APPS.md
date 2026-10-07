@@ -48,7 +48,9 @@ If you prefer, you can fork the repository and edit `src/data/registry.json` dir
 ### 🛠️ Automating Updates via Webhook (For Private Apps)
 If your app uses `directUrl`, Tooly won't check GitHub for updates. Instead, you can update Tooly's registry automatically whenever you release a new version using our Webhook!
 
-Just send a `POST` request to GitHub's `repository_dispatch` endpoint from your CI/CD pipeline (or a simple curl script):
+This webhook requires write access to Tooly's repository (`Contents: write` for a fine-grained token). A token scoped only to your own repository will not work. If you do not have that access, edit the registry in a fork and submit a pull request (see Option 2 above).
+
+Send a `POST` request to GitHub's `repository_dispatch` endpoint:
 
 ```bash
 curl -X POST https://api.github.com/repos/YOUR_ORG/tooly/dispatches \

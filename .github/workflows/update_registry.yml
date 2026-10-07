@@ -51,5 +51,10 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "chore(registry): Auto-update app version via webhook"
+          if git diff --quiet -- src/data/registry.json; then
+            echo "Registry already contains the requested values. Nothing to commit."
+            exit 0
+          fi
+          git add src/data/registry.json
+          git commit -m "chore(registry): Auto-update app version via webhook"
           git push

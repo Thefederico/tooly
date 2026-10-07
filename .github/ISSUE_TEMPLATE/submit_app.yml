@@ -41,10 +41,18 @@ body:
     id: github-repo
     attributes:
       label: GitHub Repository
-      description: The owner/repo format for GitHub (used to fetch releases).
+      description: The owner/repo format for GitHub (used to fetch releases). Leave blank if your tool is hosted elsewhere.
       placeholder: e.g., YourUsername/YourRepo
     validations:
-      required: true
+      required: false
+  - type: input
+    id: direct-url
+    attributes:
+      label: Direct Download URL (Optional)
+      description: Direct HTTP(S) link to the PKG/BIN for tools not hosted on GitHub. Provide this instead of a GitHub repository.
+      placeholder: e.g., https://dl.your-domain.com/releases/app.pkg
+    validations:
+      required: false
   - type: input
     id: title-id
     attributes:
