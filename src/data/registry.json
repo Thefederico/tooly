@@ -10,7 +10,11 @@
     "githubRepo": "LightningMods/Itemzflow",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["game-manager", "backup", "essential"],
+    "tags": [
+      "game-manager",
+      "backup",
+      "essential"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -24,7 +28,11 @@
     "githubRepo": "bucanero/apollo-ps5",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["saves", "cheats", "backup"],
+    "tags": [
+      "saves",
+      "cheats",
+      "backup"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -38,7 +46,12 @@
     "githubRepo": "LightningMods/etaHEN",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "hen", "dpi", "ftp"],
+    "tags": [
+      "payload",
+      "hen",
+      "dpi",
+      "ftp"
+    ],
     "assetPattern": "\\.(bin|elf)$"
   },
   {
@@ -52,7 +65,11 @@
     "githubRepo": "sleirsgoevy/ps5-kstuff",
     "firmwareMin": "1.00",
     "firmwareMax": "4.51",
-    "tags": ["payload", "kernel", "fself"],
+    "tags": [
+      "payload",
+      "kernel",
+      "fself"
+    ],
     "assetPattern": "\\.(bin|elf)$"
   },
   {
@@ -66,7 +83,10 @@
     "githubRepo": "Cryptogenic/PS5-IPV6-Kernel-Exploit",
     "firmwareMin": "1.00",
     "firmwareMax": "4.51",
-    "tags": ["exploit", "tool"],
+    "tags": [
+      "exploit",
+      "tool"
+    ],
     "assetPattern": "\\.(bin|elf|zip)$"
   },
   {
@@ -80,7 +100,11 @@
     "githubRepo": "ShiroDev/Shironeko",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["media", "player", "video"],
+    "tags": [
+      "media",
+      "player",
+      "video"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -91,10 +115,14 @@
     "developer": "Florinsdistortedvision",
     "category": "emulator",
     "titleId": "PPSA99203",
-    "githubRepo": "Florinsdistortedvision/PCSX2-PS5",
+    "githubRepo": "Swordpdf/PS5SX2",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["emulator", "ps2", "games"],
+    "tags": [
+      "emulator",
+      "ps2",
+      "games"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -108,7 +136,12 @@
     "githubRepo": "mihawk-99/PS5_RetroArch",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["emulator", "retro", "multisystem", "vulkan"],
+    "tags": [
+      "emulator",
+      "retro",
+      "multisystem",
+      "vulkan"
+    ],
     "assetPattern": "PS5_RetroArch.*\\.zip$"
   },
   {
@@ -122,7 +155,10 @@
     "githubRepo": "owendswang/ps5-web-file-manager",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["file-manager", "utility"],
+    "tags": [
+      "file-manager",
+      "utility"
+    ],
     "assetPattern": "\\.(pkg|elf)$"
   },
   {
@@ -136,7 +172,10 @@
     "githubRepo": "drakmor/ShadowMountPlus",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["mount", "utility"],
+    "tags": [
+      "mount",
+      "utility"
+    ],
     "assetPattern": "\\.(pkg|elf|zip)$"
   },
   {
@@ -150,7 +189,11 @@
     "githubRepo": "itsPLK/ps5-pkg-manager",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["installer", "pkg", "usb"],
+    "tags": [
+      "installer",
+      "pkg",
+      "usb"
+    ],
     "assetPattern": "\\.(pkg|elf)$"
   },
   {
@@ -164,7 +207,11 @@
     "githubRepo": null,
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["webkit", "exploit", "host"],
+    "tags": [
+      "webkit",
+      "exploit",
+      "host"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -178,7 +225,10 @@
     "githubRepo": null,
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payloads", "utility"],
+    "tags": [
+      "payloads",
+      "utility"
+    ],
     "assetPattern": "\\.pkg$"
   },
   {
@@ -192,7 +242,11 @@
     "githubRepo": "EchoStretch/kstuff-lite",
     "firmwareMin": "1.00",
     "firmwareMax": "5.50",
-    "tags": ["payload", "kernel", "fself"],
+    "tags": [
+      "payload",
+      "kernel",
+      "fself"
+    ],
     "assetPattern": "\\.elf$"
   },
   {
@@ -206,7 +260,11 @@
     "githubRepo": "drakmor/ShadowMountPlus",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "mount", "daemon"],
+    "tags": [
+      "payload",
+      "mount",
+      "daemon"
+    ],
     "assetPattern": "\\.elf$"
   },
   {
@@ -220,7 +278,11 @@
     "githubRepo": "itsPLK/ps5-pkg-manager",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "pkg", "usb"],
+    "tags": [
+      "payload",
+      "pkg",
+      "usb"
+    ],
     "assetPattern": "\\.elf$"
   },
   {
@@ -234,7 +296,11 @@
     "githubRepo": "owendswang/ps5-web-file-manager",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "file-manager", "web"],
+    "tags": [
+      "payload",
+      "file-manager",
+      "web"
+    ],
     "assetPattern": "\\.elf$"
   },
   {
@@ -248,7 +314,11 @@
     "githubRepo": "ps5-payload-dev/ftpsrv",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "ftp", "server"],
+    "tags": [
+      "payload",
+      "ftp",
+      "server"
+    ],
     "assetPattern": "\\.elf$"
   },
   {
@@ -262,7 +332,10 @@
     "githubRepo": "LightningMods/etaHEN",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "hen"],
+    "tags": [
+      "payload",
+      "hen"
+    ],
     "assetPattern": "\\.(bin|elf)$"
   },
   {
@@ -276,7 +349,554 @@
     "githubRepo": null,
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
-    "tags": ["payload", "dns"],
+    "tags": [
+      "payload",
+      "dns"
+    ],
     "assetPattern": "\\.elf$"
+  },
+  {
+    "id": "olise-player",
+    "slug": "olise-player",
+    "name": "OliSe Player",
+    "description": "Tracker music radio in FastTracker II style, streaming MOD, XM, S3M and IT from The Mod Archive.",
+    "developer": "Marice",
+    "category": "utility",
+    "titleId": "PPSA01153",
+    "githubRepo": "Marice/OliSePlayer",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ccleste",
+    "slug": "ccleste",
+    "name": "ccleste",
+    "description": "This is a C source port of the original celeste (Celeste classic) for the PICO-8, designed to be portable. Now you can enjoy the port on your PS5.",
+    "developer": "AngelXex",
+    "category": "game",
+    "titleId": "PPSA59322",
+    "githubRepo": "darkxex/PS5_Celeste",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ruffle-flash",
+    "slug": "ruffle-flash",
+    "name": "Ruffle Flash",
+    "description": "PS5 Port of Ruffle Flash Emulator.",
+    "developer": "AZiZ",
+    "category": "utility",
+    "titleId": "PPSA68091",
+    "githubRepo": "ZiZc3/Ruffle-Flash-PS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "screentester5",
+    "slug": "screentester5",
+    "name": "ScreenTester5",
+    "description": "Screen tester: solid colours and test patterns to find dead or stuck pixels, check uniformity and geometry, and run stuck-pixel recovery.",
+    "developer": "Marice",
+    "category": "tool",
+    "titleId": "PPSA69420",
+    "githubRepo": "Marice/ScreenTester5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "stremio",
+    "slug": "stremio",
+    "name": "Stremio",
+    "description": "Unofficial Stremio client for the PS5",
+    "developer": "Argyris Vazaios",
+    "category": "utility",
+    "titleId": "PPSA77711",
+    "githubRepo": "Sp9nky/unofficial-stremio-ps5-port",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.pkg$"
+  },
+  {
+    "id": "capy-mobile",
+    "slug": "capy-mobile",
+    "name": "Capy Mobile",
+    "description": "Java phone games (J2ME) on the PS5: a native homebrew emulator app",
+    "developer": "Khalifa Al-Khatri",
+    "category": "utility",
+    "titleId": "PPSA92280",
+    "githubRepo": "khalifa007/CapyMobile",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperostore",
+    "slug": "prosperostore",
+    "name": "ProsperoStore",
+    "description": "Native app store for PS5 homebrew: browse this catalog, install apps and keep them up to date.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99000",
+    "githubRepo": "blackbearreloaded/ProsperoStore",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperoradio",
+    "slug": "prosperoradio",
+    "name": "ProsperoRadio",
+    "description": "Internet radio player for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99001",
+    "githubRepo": "blackbearreloaded/ProsperoRadio",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperolight",
+    "slug": "prosperolight",
+    "name": "ProsperoLight",
+    "description": "Unofficial Moonlight game streaming port for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99002",
+    "githubRepo": "blackbearreloaded/ProsperoLight",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperotv",
+    "slug": "prosperotv",
+    "name": "ProsperoTV",
+    "description": "Native IPTV client for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99003",
+    "githubRepo": "blackbearreloaded/ProsperoTV",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperoai",
+    "slug": "prosperoai",
+    "name": "ProsperoAI",
+    "description": "Local LLM chat app for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99004",
+    "githubRepo": "blackbearreloaded/ProsperoAI",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5-opengl-showcase",
+    "slug": "ps5-opengl-showcase",
+    "name": "PS5 OpenGL Showcase",
+    "description": "Native OpenGL graphics showcase for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99005",
+    "githubRepo": "blackbearreloaded/ps5-opengl",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperopuzzles",
+    "slug": "prosperopuzzles",
+    "name": "ProsperoPuzzles",
+    "description": "Collection of puzzle games for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "game",
+    "titleId": "PPSA99006",
+    "githubRepo": "blackbearreloaded/ProsperoPuzzles",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "yamagi-quake-ii",
+    "slug": "yamagi-quake-ii",
+    "name": "Yamagi Quake II",
+    "description": "Native PS5 port of Yamagi Quake II.",
+    "developer": "BlackBearReloaded",
+    "category": "game",
+    "titleId": "PPSA99007",
+    "githubRepo": "blackbearreloaded/ps5-yamagi-quake2",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperoeden",
+    "slug": "prosperoeden",
+    "name": "ProsperoEden",
+    "description": "Unofficial Eden emulator port for PS5.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99008",
+    "githubRepo": "blackbearreloaded/ProsperoEden",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "vkquake",
+    "slug": "vkquake",
+    "name": "vkQuake",
+    "description": "Native PS5 port of vkQuake, the Vulkan Quake engine, at up to 120 FPS and 4K with DualSense input. Needs your own Quake game data.",
+    "developer": "Mihawk",
+    "category": "game",
+    "titleId": "PPSA99010",
+    "githubRepo": "mihawk-99/PS5_vkQuake",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5-fsr4-showcase",
+    "slug": "ps5-fsr4-showcase",
+    "name": "PS5 FSR4 Showcase",
+    "description": "Shows AMD FSR 4 upscaling on the PS5: a city at dusk rendered small and upscaled at 60 fps, with settings to compare it against bilinear and native rendering.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99011",
+    "githubRepo": "blackbearreloaded/ps5-fsr4",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "evo-player",
+    "slug": "evo-player",
+    "name": "EVO Player",
+    "description": "Media player for PS5 that plays video from USB or internal storage, with hardware decoding up to 4K, 10-bit HDR and surround audio.",
+    "developer": "Sain Saji",
+    "category": "utility",
+    "titleId": "PPSA99039",
+    "githubRepo": "sainsaji/EVO-PLAYER-PS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "homebrew-ui-lab",
+    "slug": "homebrew-ui-lab",
+    "name": "Homebrew UI Lab",
+    "description": "A gallery of 21 complete, working interface designs for PS5 homebrew, drawn with OpenGL, with 30 themes and a reusable widget kit. Switch designs with L1 and R1.",
+    "developer": "BlackBearReloaded",
+    "category": "utility",
+    "titleId": "PPSA99050",
+    "githubRepo": "blackbearreloaded/ps5-homebrew-ui",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "opennow-ps5-prototype",
+    "slug": "opennow-ps5-prototype",
+    "name": "OpenNOW PS5 - Prototype",
+    "description": "Experimental native PS5 GeForce NOW client: a working, console-tested prototype with hardware decoding and GPU presentation.",
+    "developer": "Portablelle",
+    "category": "utility",
+    "titleId": "PPSA99082",
+    "githubRepo": "Portablelle/OpenNOW-PS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prospero-explorer",
+    "slug": "prospero-explorer",
+    "name": "Prospero Explorer",
+    "description": "File explorer for PS5 that manages files and archives, plays media, edits text, installs packages and serves files over the network.",
+    "developer": "SvenGDK",
+    "category": "tool",
+    "titleId": "PPSA99109",
+    "githubRepo": "SvenGDK/Prospero-Explorer",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prospero-multi-tools",
+    "slug": "prospero-multi-tools",
+    "name": "Prospero Multi Tools",
+    "description": "Backup manager for PS5: browse and edit PS1 to PS5, PSP and PS Vita backups, install packages and launch PS1/PS2/PSP titles. Needs the unjail payload.",
+    "developer": "SvenGDK",
+    "category": "tool",
+    "titleId": "PPSA99110",
+    "githubRepo": "SvenGDK/Prospero-Multi-Tools",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5vr",
+    "slug": "ps5vr",
+    "name": "PS5VR",
+    "description": "Native VR video player for PS VR2 on jailbroken PS5: 8K, 180/360, 3D, spatial audio",
+    "developer": "Husam Osman",
+    "category": "utility",
+    "titleId": "PPSA99177",
+    "githubRepo": "theghostonline/PS5VR",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "kodi",
+    "slug": "kodi",
+    "name": "Kodi",
+    "description": "Unofficial port of the Kodi 22 media center for PS5, with a 4K GPU interface, hardware H.264, HEVC and VP9 decoding and HDR output.",
+    "developer": "VivaLaVent",
+    "category": "utility",
+    "titleId": "PPSA99420",
+    "githubRepo": "VivaLaVent/kodi-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "jelly5",
+    "slug": "jelly5",
+    "name": "Jelly5",
+    "description": "A native Jellyfin client for jailbroken PS5: its own liquid-glass interface, hardware-decoded 4K HDR",
+    "developer": "02dnot",
+    "category": "utility",
+    "titleId": "PPSA99505",
+    "githubRepo": "02dnot/Jelly5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "doom-native-port",
+    "slug": "doom-native-port",
+    "name": "DOOM Native Port",
+    "description": "id Software's original DOOM source running natively on the PS5, with the shareware episode. Add your own DOOM, DOOM II and Final DOOM files from a PC or phone browser, a link or FTP.",
+    "developer": "lowbit",
+    "category": "game",
+    "titleId": "PPSA99666",
+    "githubRepo": "lowbit/ps5-doom",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "openrct2-native-port",
+    "slug": "openrct2-native-port",
+    "name": "OpenRCT2 Native Port",
+    "description": "OpenRCT2, the open-source RollerCoaster Tycoon 2, running natively on the PS5 and played with the DualSense alone. Send your own game files, even the GOG installer, from a PC or phone browser.",
+    "developer": "lowbit",
+    "category": "game",
+    "titleId": "PPSA99728",
+    "githubRepo": "lowbit/ps5-openrct2",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "porpoise",
+    "slug": "porpoise",
+    "name": "Porpoise",
+    "description": "A native GameCube and Wii emulator for jailbroken PS5, powered by Dolphin. Cover-flow library, box art, memory cards, original music.",
+    "developer": "Ruben Ripalda",
+    "category": "utility",
+    "titleId": "PPSA99764",
+    "githubRepo": "elripalda/Porpoise-Dolphin-Emulator-for-PS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "pico-8-for-ps5",
+    "slug": "pico-8-for-ps5",
+    "name": "PICO-8 for PS5",
+    "description": "Unofficial loader that runs your own copy of the PICO-8 Linux build as a native PS5 app.",
+    "developer": "RafaelNGP",
+    "category": "utility",
+    "titleId": "PPSA99808",
+    "githubRepo": "RafaelNGP/pico8-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prospero-vibrate",
+    "slug": "prospero-vibrate",
+    "name": "Prospero Vibrate",
+    "description": "Controller vibration studio for PS5 with live motor control, preset patterns, a custom pattern editor and timed playback.",
+    "developer": "SvenGDK",
+    "category": "utility",
+    "titleId": "PPSA99920",
+    "githubRepo": "SvenGDK/Prospero-Vibrate",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prospero-win",
+    "slug": "prospero-win",
+    "name": "Prospero Win",
+    "description": "Windows compatibility runtime for native PlayStation 5 homebrew.",
+    "developer": "mpereiraesaa",
+    "category": "utility",
+    "titleId": "PPSA99995",
+    "githubRepo": "mpereiraesaa/prospero-win",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "nuvio-ps5",
+    "slug": "nuvio-ps5",
+    "name": "Nuvio PS5",
+    "description": "Nuvio TV for a jailbroken PS5, with EVO native playback and the interface served by the console itself.",
+    "developer": "Bilawal Riaz",
+    "category": "utility",
+    "titleId": "PPSA99997",
+    "githubRepo": "bilawalriaz/nuvio-ps5-homebrew",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
   }
 ]
