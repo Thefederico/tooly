@@ -7,6 +7,7 @@ import {
   DiscoveredPs5,
   AppUpdateInfo,
   ScanSessionResponse,
+  FtpInjectionResult,
 } from "./types";
 
 export const tauriApi = {
@@ -98,5 +99,9 @@ export const tauriApi = {
       newFilename,
       newVersion,
     });
+  },
+
+  startPs5FtpServer: async (ps5Ip: string): Promise<FtpInjectionResult> => {
+    return await invoke<FtpInjectionResult>("start_ps5_ftp_server", { ps5Ip });
   },
 };

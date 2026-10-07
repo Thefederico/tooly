@@ -7,6 +7,8 @@ use tokio::time::timeout;
 
 pub const PS5_FTP_PORT: u16 = 2121;
 pub const PS5_DPI_PORT: u16 = 12800;
+pub const PS5_ELF_LOADER_PORT_9020: u16 = 9020;
+pub const PS5_ELF_LOADER_PORT_9021: u16 = 9021;
 pub const DEFAULT_PROBE_TIMEOUT_MS: u64 = 250;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -14,6 +16,8 @@ pub struct DiscoveredPs5 {
     pub ip: String,
     pub ftp_open: bool,
     pub dpi_open: bool,
+    #[serde(default)]
+    pub elf_loader_open: bool,
 }
 
 pub struct DiscoveryService;
@@ -59,15 +63,22 @@ impl DiscoveryService {
         for ip in ips {
             let dur = probe_timeout;
             join_set.spawn(async move {
-                // Primero sondeamos FTP (puerto más común para el homebrew daemon)
+                // Sondeamos FTP, DPI y ELF Loaders (9020 / 9021)
                 let ftp_open = DiscoveryService::probe_port(ip, PS5_FTP_PORT, dur).await;
                 let dpi_open = DiscoveryService::probe_port(ip, PS5_DPI_PORT, dur).await;
+                let elf_loader_open = if !ftp_open {
+                    DiscoveryService::probe_port(ip, PS5_ELF_LOADER_PORT_9020, dur).await
+                        || DiscoveryService::probe_port(ip, PS5_ELF_LOADER_PORT_9021, dur).await
+                } else {
+                    false
+                };
 
-                if ftp_open || dpi_open {
+                if ftp_open || dpi_open || elf_loader_open {
                     Some(DiscoveredPs5 {
                         ip: ip.to_string(),
                         ftp_open,
                         dpi_open,
+                        elf_loader_open,
                     })
                 } else {
                     None

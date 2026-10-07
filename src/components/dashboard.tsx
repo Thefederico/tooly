@@ -13,6 +13,7 @@ import { DeviceScanner } from "./device-scanner";
 import { AppGrid } from "./app-grid";
 import { LogTerminal } from "./log-terminal";
 import { ArchiveModal } from "./archive-modal";
+import { FtpStartModal } from "./ftp-start-modal";
 
 import { useAppStore } from "../stores/use-app-store";
 import { usePs5Discovery } from "../hooks/use-ps5-discovery";
@@ -23,6 +24,7 @@ export function Dashboard() {
   const lang = useAppStore((state) => state.lang);
   const toggleLanguage = useAppStore((state) => state.toggleLanguage);
   const setProgressState = useAppStore((state) => state.setProgressState);
+  const ftpStartModal = useAppStore((state) => state.ftpStartModal);
 
   const t = translations[lang];
 
@@ -58,6 +60,7 @@ export function Dashboard() {
     isScanningPayloads,
     discoverPs5,
     scanPayloads,
+    startFtpServer,
   } = usePs5Discovery((autoTargetIp) => {
     scanPs5(autoTargetIp);
   });
@@ -232,6 +235,8 @@ export function Dashboard() {
               scanPs5();
             }}
             appsCount={installedApps.length}
+            onStartFtp={() => startFtpServer(ps5Ip)}
+            isStartingFtp={ftpStartModal.isInjecting}
             payloadDir={payloadDir}
             onPayloadDirChange={setPayloadDir}
             isScanningPayloads={isScanningPayloads}
@@ -256,6 +261,9 @@ export function Dashboard() {
           />
         </section>
       </main>
+
+      {/* Modal de Inicio / Inyección de Payload FTP */}
+      <FtpStartModal onConfirm={(ip) => startFtpServer(ip)} />
 
       {/* Modal de Actualizaciones de Archive.org */}
       <ArchiveModal onInstallDirect={handleInstallArchiveDirect} />
