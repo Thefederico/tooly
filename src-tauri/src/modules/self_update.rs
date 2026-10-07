@@ -94,6 +94,21 @@ impl SelfUpdateService {
             .await
             .map_err(|e| format!("Error conectando a GitHub para Tooly update: {e}"))?;
 
+        if res.status() == reqwest::StatusCode::NOT_FOUND {
+            // No hay releases creados todavía en el repositorio.
+            // Se asume que la versión en ejecución está al día sin lanzar error molesto.
+            return Ok(AppUpdateInfo {
+                current_version: TOOLY_CURRENT_VERSION.to_string(),
+                latest_version: TOOLY_CURRENT_VERSION.to_string(),
+                has_update: false,
+                release_notes: None,
+                published_at: None,
+                download_url: None,
+                asset_name: None,
+                html_url: Some(format!("https://github.com/{repo}/releases")),
+            });
+        }
+
         if !res.status().is_success() {
             return Err(format!("GitHub API retornó status: {}", res.status()));
         }
@@ -200,5 +215,15 @@ mod tests {
         let json = serde_json::to_string(&info).unwrap();
         assert!(json.contains("0.2.0"));
         assert!(json.contains("has_update\":true"));
+    }
+
+    #[tokio::test]
+    async fn test_check_for_updates_returns_ok_on_unreleased_repo() {
+        // Thefederico/tooly todavía no tiene releases publicados en GitHub
+        let res = SelfUpdateService::check_for_updates(Some("Thefederico/tooly")).await;
+        assert!(res.is_ok(), "Debe retornar Ok sin fallar con 404, obtuvo: {:?}", res);
+        let info = res.unwrap();
+        assert_eq!(info.current_version, TOOLY_CURRENT_VERSION);
+        assert!(!info.has_update);
     }
 }
