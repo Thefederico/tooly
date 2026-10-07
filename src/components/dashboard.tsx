@@ -64,8 +64,7 @@ export function Dashboard() {
 
   // Listeners de eventos Tauri para progreso de descargas en tiempo real
   useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    listen<DownloadProgressPayload>("download-progress", (event) => {
+    const unlistenPromise = listen<DownloadProgressPayload>("dpi-progress", (event) => {
       setProgressState(event.payload);
       if (
         event.payload.status === "installed_success" ||
@@ -75,12 +74,10 @@ export function Dashboard() {
           setProgressState(null);
         }, 5000);
       }
-    }).then((fn) => {
-      unlisten = fn;
     });
 
     return () => {
-      if (unlisten) unlisten();
+      unlistenPromise.then((unlisten) => unlisten());
     };
   }, [setProgressState]);
 
