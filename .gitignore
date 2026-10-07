@@ -228,7 +228,17 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-# Windows shortcuts
+### Windows shortcuts
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,node,linux,macos,windows
+
+# AI Assistants local workspaces & scratch directories
+.claude/
+.cline/
+.codebuddy/
+.continue/
+.junie/
+.kiro/
+.gitnexus/
+ARCHIVE_ORG_UPDATES_PLAN.md
