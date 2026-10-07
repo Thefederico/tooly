@@ -39,8 +39,8 @@ export function LogTerminal({ logs, isCopied, onCopyLogs }: LogTerminalProps) {
         </button>
       </div>
       <div className="font-mono text-[11px] text-slate-400 flex flex-col gap-1 overflow-y-auto max-h-40 pr-1 select-text cursor-text">
-        {logs.map((log, index) => (
-          <div key={index} className="leading-tight select-text">
+        {logs.map((log) => (
+          <div key={log} className="leading-tight select-text">
             <span className="text-cyan-500/70 select-text">{log}</span>
           </div>
         ))}
