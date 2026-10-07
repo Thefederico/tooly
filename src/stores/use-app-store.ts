@@ -46,6 +46,10 @@ interface AppStoreState {
   setHasDiscoveredConsole: (val: boolean) => void;
   isScanningFtp: boolean;
   setIsScanningFtp: (val: boolean) => void;
+  activeScanSession: string | null;
+  setActiveScanSession: (session: string | null) => void;
+  scanProgress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null;
+  setScanProgress: (progress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null) => void;
 
   // Local Payloads
   payloadDir: string;
@@ -113,6 +117,10 @@ export const useAppStore = create<AppStoreState>((set) => ({
   setHasDiscoveredConsole: (hasDiscoveredConsole) => set({ hasDiscoveredConsole }),
   isScanningFtp: false,
   setIsScanningFtp: (isScanningFtp) => set({ isScanningFtp }),
+  activeScanSession: null,
+  setActiveScanSession: (activeScanSession) => set({ activeScanSession }),
+  scanProgress: null,
+  setScanProgress: (scanProgress) => set({ scanProgress }),
 
   // Local Payloads
   payloadDir: "",
