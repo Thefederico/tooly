@@ -133,6 +133,25 @@ export function Dashboard() {
     return () => clearTimeout(autoScanTimer);
   }, []);
 
+  // Listeners de eventos Tauri para progreso de descargas DPI en tiempo real
+  useEffect(() => {
+    const unlistenPromise = listen<DownloadProgressPayload>("dpi-progress", (event) => {
+      setProgressState(event.payload);
+      if (
+        event.payload.status === "installed_success" ||
+        event.payload.status === "error"
+      ) {
+        setTimeout(() => {
+          setProgressState(null);
+        }, 5000);
+      }
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
   // Auto-descubrimiento en subred LAN (Flujo Principal)
   const handleDiscoverPs5 = async () => {
     setIsDiscovering(true);

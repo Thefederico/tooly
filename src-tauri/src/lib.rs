@@ -69,13 +69,22 @@ async fn start_scan_ps5_apps(
     port: Option<u16>,
     timeout_secs: Option<u64>,
 ) -> Result<ScanSessionResponse, ToolyError> {
-    let session_id = format!("scan-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+    static NEXT_SCAN_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+    let session_id = format!(
+        "scan-{}-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0),
+        NEXT_SCAN_ID.fetch_add(1, Ordering::Relaxed)
+    );
     let cancel_flag = scan_manager.register(session_id.clone());
     let port = port.unwrap_or(2121);
 
     let app_handle = app.clone();
     let session_id_clone = session_id.clone();
     let scan_manager_inner = scan_manager.inner().clone();
+    let cancel_flag_check = cancel_flag.clone();
 
     tokio::task::spawn_blocking(move || {
         let sid = session_id_clone.clone();
@@ -98,13 +107,23 @@ async fn start_scan_ps5_apps(
 
         match res {
             Ok(apps) => {
-                let _ = app_handle.emit(
-                    "scan:complete",
-                    ScanCompletePayload {
-                        session_id: sid.clone(),
-                        total_apps: apps.len(),
-                    },
-                );
+                if cancel_flag_check.load(Ordering::Relaxed) {
+                    let _ = app_handle.emit(
+                        "scan:cancelled",
+                        ScanCompletePayload {
+                            session_id: sid.clone(),
+                            total_apps: apps.len(),
+                        },
+                    );
+                } else {
+                    let _ = app_handle.emit(
+                        "scan:complete",
+                        ScanCompletePayload {
+                            session_id: sid.clone(),
+                            total_apps: apps.len(),
+                        },
+                    );
+                }
             }
             Err(err) => {
                 let _ = app_handle.emit(
