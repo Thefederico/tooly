@@ -239,10 +239,15 @@ async fn check_app_update(repo: Option<String>) -> Result<modules::self_update::
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let scan_manager = Arc::new(ScanManager::default());
+
     tauri::Builder::default()
+        .manage(scan_manager)
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             discover_ps5_consoles,
+            start_scan_ps5_apps,
+            cancel_scan,
             scan_ps5_apps,
             scan_local_payloads,
             check_github_update,

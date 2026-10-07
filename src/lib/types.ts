@@ -91,6 +91,28 @@ export interface ArchiveOrgGameUpdate {
   description?: string | null;
 }
 
+export interface ScanProgressPayload {
+  session_id: string;
+  current_folder: string;
+  scanned_count: number;
+  total_estimated: number;
+  percentage: number;
+}
+
+export interface ScanCompletePayload {
+  session_id: string;
+  total_apps: number;
+}
+
+export interface ScanErrorPayload {
+  session_id: string;
+  error: ToolyError;
+}
+
+export interface ScanSessionResponse {
+  session_id: string;
+}
+
 export type ToolyError =
   | { type: "SfoBufferTooSmall"; message: { len: number } }
   | { type: "SfoInvalidMagic"; message: { found: number[] } }

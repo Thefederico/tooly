@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import { InstalledApp, LocalPayload, GitHubReleaseInfo, DpiInstallResponse, DiscoveredPs5, AppUpdateInfo } from "./types";
+import {
+  InstalledApp,
+  LocalPayload,
+  GitHubReleaseInfo,
+  DpiInstallResponse,
+  DiscoveredPs5,
+  AppUpdateInfo,
+  ScanSessionResponse,
+} from "./types";
 
 export const tauriApi = {
   checkAppUpdate: async (repo?: string): Promise<AppUpdateInfo> => {
@@ -8,6 +16,14 @@ export const tauriApi = {
 
   discoverPs5Consoles: async (baseIp?: string, timeoutMs?: number): Promise<DiscoveredPs5[]> => {
     return await invoke<DiscoveredPs5[]>("discover_ps5_consoles", { baseIp, timeoutMs });
+  },
+
+  startScanPs5Apps: async (ip: string, port?: number, timeoutSecs?: number): Promise<ScanSessionResponse> => {
+    return await invoke<ScanSessionResponse>("start_scan_ps5_apps", { ip, port, timeoutSecs });
+  },
+
+  cancelScan: async (sessionId: string): Promise<boolean> => {
+    return await invoke<boolean>("cancel_scan", { sessionId });
   },
 
   scanPs5Apps: async (ip: string, port?: number, timeoutSecs?: number): Promise<InstalledApp[]> => {
