@@ -1,15 +1,19 @@
 use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpStream;
+use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
 
 pub const PS5_FTP_PORT: u16 = 2121;
 pub const PS5_DPI_PORT: u16 = 12800;
+pub const PS5_ETAHEN_PORT_9090: u16 = 9090;
 pub const PS5_ELF_LOADER_PORT_9020: u16 = 9020;
 pub const PS5_ELF_LOADER_PORT_9021: u16 = 9021;
-pub const DEFAULT_PROBE_TIMEOUT_MS: u64 = 250;
+pub const PS5_REMOTE_PLAY_PORT_9295: u16 = 9295;
+pub const DEFAULT_PROBE_TIMEOUT_MS: u64 = 400;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DiscoveredPs5 {
@@ -18,6 +22,8 @@ pub struct DiscoveredPs5 {
     pub dpi_open: bool,
     #[serde(default)]
     pub elf_loader_open: bool,
+    #[serde(default)]
+    pub ps_native_open: bool,
 }
 
 pub struct DiscoveryService;
@@ -51,34 +57,48 @@ impl DiscoveryService {
         }
     }
 
-    /// Escanea concurrentemente toda la subred dada buscando consolas PS5 con FTP (:2121) o DPI (:12800)
+    /// Escanea concurrentemente toda la subred dada buscando consolas PS5 activas en la LAN
     pub async fn scan_subnet_for_ps5(
         base_ip: Ipv4Addr,
         timeout_ms: Option<u64>,
     ) -> Vec<DiscoveredPs5> {
         let ips = Self::get_subnet_ips(base_ip);
         let probe_timeout = Duration::from_millis(timeout_ms.unwrap_or(DEFAULT_PROBE_TIMEOUT_MS));
+        let semaphore = Arc::new(Semaphore::new(64));
         let mut join_set = JoinSet::new();
 
         for ip in ips {
             let dur = probe_timeout;
+            let sem = semaphore.clone();
             join_set.spawn(async move {
-                // Sondeamos FTP, DPI y ELF Loaders (9020 / 9021)
+                let _permit = match sem.acquire().await {
+                    Ok(p) => p,
+                    Err(_) => return None,
+                };
+
+                // Sondeamos FTP, DPI (:12800 / :9090), ELF Loaders (9020 / 9021) y PlayStation Remote Play (:9295)
                 let ftp_open = DiscoveryService::probe_port(ip, PS5_FTP_PORT, dur).await;
-                let dpi_open = DiscoveryService::probe_port(ip, PS5_DPI_PORT, dur).await;
+                let dpi_open = DiscoveryService::probe_port(ip, PS5_DPI_PORT, dur).await
+                    || DiscoveryService::probe_port(ip, PS5_ETAHEN_PORT_9090, dur).await;
                 let elf_loader_open = if !ftp_open {
                     DiscoveryService::probe_port(ip, PS5_ELF_LOADER_PORT_9020, dur).await
                         || DiscoveryService::probe_port(ip, PS5_ELF_LOADER_PORT_9021, dur).await
                 } else {
                     false
                 };
+                let ps_native_open = if !ftp_open && !dpi_open && !elf_loader_open {
+                    DiscoveryService::probe_port(ip, PS5_REMOTE_PLAY_PORT_9295, dur).await
+                } else {
+                    false
+                };
 
-                if ftp_open || dpi_open || elf_loader_open {
+                if ftp_open || dpi_open || elf_loader_open || ps_native_open {
                     Some(DiscoveredPs5 {
                         ip: ip.to_string(),
                         ftp_open,
                         dpi_open,
                         elf_loader_open,
+                        ps_native_open,
                     })
                 } else {
                     None
@@ -93,8 +113,12 @@ impl DiscoveryService {
             }
         }
 
-        // Ordenamos por IP para salida determinista
-        results.sort_by(|a, b| a.ip.cmp(&b.ip));
+        // Priorizamos consolas con FTP/DPI/ELF abiertos, y luego ordenamos por IP
+        results.sort_by(|a, b| {
+            let score_a = (a.ftp_open as u8) * 4 + (a.dpi_open as u8) * 3 + (a.elf_loader_open as u8) * 2 + (a.ps_native_open as u8);
+            let score_b = (b.ftp_open as u8) * 4 + (b.dpi_open as u8) * 3 + (b.elf_loader_open as u8) * 2 + (b.ps_native_open as u8);
+            score_b.cmp(&score_a).then_with(|| a.ip.cmp(&b.ip))
+        });
         results
     }
 }

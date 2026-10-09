@@ -17,6 +17,7 @@ pub struct GitHubReleaseInfo {
     pub assets: Vec<ReleaseAsset>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UpdateCheckResult {
     pub repo: String,
@@ -149,6 +150,7 @@ impl GitHubClient {
     }
 
     /// Remueve una entrada de la caché
+    #[allow(dead_code)]
     pub async fn remove_from_cache(repo: &str) {
         let cache = get_global_cache();
         let mut lock = cache.write().await;
@@ -156,6 +158,7 @@ impl GitHubClient {
     }
 
     /// Limpia por completo la caché de GitHub
+    #[allow(dead_code)]
     pub async fn clear_cache() {
         let cache = get_global_cache();
         let mut lock = cache.write().await;
@@ -187,6 +190,7 @@ impl GitHubClient {
     }
 
     /// Compara versión instalada vs versión en GitHub (remueve prefijos 'v')
+    #[allow(dead_code)]
     pub fn is_update_available(current: &str, latest: &str) -> bool {
         let clean_curr = current.trim_start_matches('v').trim_start_matches('V');
         let clean_lat = latest.trim_start_matches('v').trim_start_matches('V');
