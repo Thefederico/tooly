@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "message")]
 pub enum ToolyError {
     SfoBufferTooSmall { len: usize },
@@ -12,6 +12,10 @@ pub enum ToolyError {
     FtpTimeout { ip: String, port: u16, seconds: u64 },
     DpiError(String),
     GitHubError(String),
+    ArchiveOrgError(String),
+    PayloadInjectionError(String),
+    InvalidInput(String),
+    InternalError(String),
     IoError(String),
 }
 
@@ -35,12 +39,22 @@ impl fmt::Display for ToolyError {
             }
             Self::DpiError(err) => write!(f, "DPI deployment failed: {}", err),
             Self::GitHubError(err) => write!(f, "GitHub API error: {}", err),
+            Self::ArchiveOrgError(err) => write!(f, "Archive.org API error: {}", err),
+            Self::PayloadInjectionError(err) => write!(f, "Error inyectando payload en PS5: {}", err),
+            Self::InvalidInput(err) => write!(f, "Invalid input: {}", err),
+            Self::InternalError(err) => write!(f, "Internal error: {}", err),
             Self::IoError(err) => write!(f, "I/O operation failed: {}", err),
         }
     }
 }
 
 impl std::error::Error for ToolyError {}
+
+impl From<tokio::task::JoinError> for ToolyError {
+    fn from(err: tokio::task::JoinError) -> Self {
+        Self::InternalError(format!("Task spawn/join error: {}", err))
+    }
+}
 
 impl From<ToolyError> for String {
     fn from(err: ToolyError) -> Self {

@@ -136,14 +136,12 @@ export function ArchiveUpdatesModal({
                     <button
                       onClick={() => onInstallDirect(item.download_url, item.file_name)}
                       disabled={isInstalling}
-                      className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-50 ${
-                        item.is_recommended
-                          ? "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(0,240,255,0.3)]"
-                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                      className={`px-3.5 py-1.5 text-xs gap-1.5 ${
+                        item.is_recommended ? "btn-ps-primary" : "btn-ps-secondary"
                       }`}
                     >
                       <DownloadCloud className={`w-3.5 h-3.5 ${isThisInstalling ? "animate-bounce" : ""}`} />
-                      {isThisInstalling ? t.installingBtn : t.installDirectDpi}
+                      <span>{isThisInstalling ? t.installingBtn : t.installDirectDpi}</span>
                     </button>
                   </div>
                 </div>

@@ -27,6 +27,13 @@ export const translations = {
     autoDetect: "Auto-detect",
     autoDetecting: "Detecting...",
     autoDetectTooltip: "Scan local LAN subnet (/24) for active PS5 consoles (:2121 / :12800)",
+    autoDetectRadarBtn: "Auto-Detect Console",
+    autoDetectRadarScanning: "Searching LAN Subnet...",
+    autoDetectRadarSubtext: "Scans ports :2121 (FTP) & :12800 (DPI)",
+    manualIpToggle: "Manual IP configuration",
+    consoleFoundStatus: "Console detected on LAN",
+    consoleNotFoundStatus: "No console detected yet",
+    rescanRadar: "Scan Subnet Again",
     appsDetected: "Apps detected on console:",
     scannedPaths: "Scanned paths:",
 
@@ -43,6 +50,9 @@ export const translations = {
     copied: "Copied",
     copyLogsTooltip: "Copy all log entries to clipboard",
 
+    // FTP Status Notice
+    logFtpClosedNotice: (ip: string) => `Console found at ${ip}, but FTP (:2121) is closed. Please enable FTP via etaHEN or Itemzflow on your PS5 to scan apps.`,
+
     // Right Panel: Apps & Updates
     installedAppsTitle: "Installed Apps & Updates",
     installedAppsSubtitle: "Remote PARAM.SFO detection & direct sync with GitHub Releases",
@@ -52,7 +62,15 @@ export const translations = {
     scanPs5Now: "Scan PS5 Now",
     scanningConsole: "Scanning console...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "All",
+    filterUpdates: "Updates",
+    filterHomebrew: "Homebrew",
+    filterGames: "Games",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Search app by name or Title ID...",
+    standalonePayload: "Standalone payload",
+    noDirectPkg: "No direct PKG/ZIP",
     updateBadge: "Update",
     upToDateBadge: "Up to date",
     installedVer: "Installed",
@@ -114,6 +132,13 @@ export const translations = {
     autoDetect: "Auto-detectar",
     autoDetecting: "Buscando...",
     autoDetectTooltip: "Escanear la subred LAN (/24) buscando consolas PS5 activas (:2121 / :12800)",
+    autoDetectRadarBtn: "Auto-Detectar Consola",
+    autoDetectRadarScanning: "Buscando en la subred LAN...",
+    autoDetectRadarSubtext: "Escanea puertos :2121 (FTP) y :12800 (DPI)",
+    manualIpToggle: "Configuración manual de IP",
+    consoleFoundStatus: "Consola detectada en LAN",
+    consoleNotFoundStatus: "Sin consola detectada aún",
+    rescanRadar: "Volver a buscar en subred",
     appsDetected: "Apps detectadas en consola:",
     scannedPaths: "Rutas escaneadas:",
 
@@ -130,6 +155,9 @@ export const translations = {
     copied: "Copiado",
     copyLogsTooltip: "Copiar todo el registro al portapapeles",
 
+    // FTP Status Notice
+    logFtpClosedNotice: (ip: string) => `Consola detectada en ${ip}, pero el FTP (:2121) está inactivo. Por favor activa el servidor FTP en tu PS5 mediante etaHEN o Itemzflow para escanear apps.`,
+
     // Right Panel: Apps & Updates
     installedAppsTitle: "Aplicaciones Instaladas & Actualizaciones",
     installedAppsSubtitle: "Detección remota de PARAM.SFO y sincronización directa con GitHub Releases",
@@ -139,7 +167,15 @@ export const translations = {
     scanPs5Now: "Escanear PS5 Ahora",
     scanningConsole: "Escaneando consola...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "Todas",
+    filterUpdates: "Actualizaciones",
+    filterHomebrew: "Homebrew",
+    filterGames: "Juegos",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Buscar por nombre o Title ID...",
+    standalonePayload: "Payload local/directo",
+    noDirectPkg: "Sin PKG/ZIP directo",
     updateBadge: "Update",
     upToDateBadge: "Al día",
     installedVer: "Instalada",
