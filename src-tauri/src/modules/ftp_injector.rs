@@ -147,8 +147,8 @@ impl FtpPayloadInjector {
         }
 
         let err_msg = last_error
-            .map(|e| e.to_string())
-            .unwrap_or_else(|| "Puertos ELF Loader (9020, 9021) y fallback cerrados o inalcanzables".to_string());
+            .map(|e| format!("{e}. Verifica que el exploit / ELF Loader esté activo en la PS5"))
+            .unwrap_or_else(|| format!("Puertos ELF Loader (9020, 9021) cerrados en {ps5_ip}. Ejecuta el exploit o etaHEN en tu PS5 primero"));
         Err(ToolyError::PayloadInjectionError(err_msg))
     }
 }

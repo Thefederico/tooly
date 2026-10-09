@@ -3,6 +3,7 @@ import { useAppStore } from "../stores/use-app-store";
 import { tauriApi } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
 import { formatToolyError } from "../lib/types";
+import { isValidIpv4 } from "../lib/utils";
 
 export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
   const lang = useAppStore((state) => state.lang);
@@ -21,61 +22,16 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
   const setLocalPayloads = useAppStore((state) => state.setLocalPayloads);
   const isScanningPayloads = useAppStore((state) => state.isScanningPayloads);
   const setIsScanningPayloads = useAppStore((state) => state.setIsScanningPayloads);
-  const autoStartFtp = useAppStore((state) => state.autoStartFtp);
-  const openFtpStartModal = useAppStore((state) => state.openFtpStartModal);
-  const setIsInjectingFtp = useAppStore((state) => state.setIsInjectingFtp);
-  const closeFtpStartModal = useAppStore((state) => state.closeFtpStartModal);
   const addLog = useAppStore((state) => state.addLog);
 
-  const ftpStartInFlight = useRef(false);
-
   const t = translations[lang];
-
-  // Inyectar e iniciar el payload ftpsrv en la PS5
-  const startFtpServer = useCallback(
-    async (targetIp?: string): Promise<boolean> => {
-      const ip = (targetIp || ps5Ip).trim();
-      if (!ip) return false;
-      if (ftpStartInFlight.current) return false;
-      ftpStartInFlight.current = true;
-
-      setIsInjectingFtp(true);
-      addLog(t.logInjectingFtp(ip));
-
-      try {
-        const res = await tauriApi.startPs5FtpServer(ip);
-        if (res.success && res.ftp_verified) {
-          addLog(t.logFtpInjectSuccess(res.method_used));
-          closeFtpStartModal();
-
-          // Si el escaneo automático está conectado, disparar el escaneo
-          if (onAutoScanRequest) {
-            setTimeout(() => {
-              onAutoScanRequest(ip);
-            }, 400);
-          }
-          return true;
-        } else {
-          addLog(t.logFtpInjectFailed(res.message));
-          return false;
-        }
-      } catch (err: unknown) {
-        addLog(t.logFtpInjectFailed(formatToolyError(err)));
-        return false;
-      } finally {
-        ftpStartInFlight.current = false;
-        setIsInjectingFtp(false);
-      }
-    },
-    [ps5Ip, t, addLog, setIsInjectingFtp, closeFtpStartModal, onAutoScanRequest]
-  );
 
   // Discover PS5 consoles via UDP / Port probing
   const discoverPs5 = useCallback(async () => {
     setIsDiscovering(true);
     addLog(t.logDiscovering);
     try {
-      const baseHint = ps5Ip.trim().length > 0 ? ps5Ip.trim() : undefined;
+      const baseHint = ps5Ip && isValidIpv4(ps5Ip.trim()) ? ps5Ip.trim() : undefined;
       const discovered = await tauriApi.discoverPs5Consoles(baseHint);
       if (discovered.length > 0) {
         const selected = discovered[0];
@@ -90,15 +46,8 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
             }, 300);
           }
         } else {
-          // Servidor FTP apagado: revisar si el usuario tiene autoStart activado o abrir modal
-          if (autoStartFtp) {
-            addLog(t.logAutoStartFtp(selected.ip));
-            setTimeout(() => {
-              startFtpServer(selected.ip);
-            }, 300);
-          } else {
-            openFtpStartModal(selected.ip);
-          }
+          // Servidor FTP apagado: avisar amistosamente que lo encienda en la PS5
+          addLog(`ℹ️ ${t.logFtpClosedNotice(selected.ip)}`);
         }
         return selected;
       } else {
@@ -111,7 +60,7 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
     } finally {
       setIsDiscovering(false);
     }
-  }, [ps5Ip, t, addLog, setPs5Ip, setHasDiscoveredConsole, setIsDiscovering, onAutoScanRequest, autoStartFtp, openFtpStartModal, startFtpServer]);
+  }, [ps5Ip, t, addLog, setPs5Ip, setHasDiscoveredConsole, setIsDiscovering, onAutoScanRequest]);
 
   // Scan local folder for .bin / .elf payloads
   const scanPayloads = useCallback(async () => {
@@ -146,6 +95,5 @@ export function usePs5Discovery(onAutoScanRequest?: (ip: string) => void) {
     isScanningPayloads,
     discoverPs5,
     scanPayloads,
-    startFtpServer,
   };
 }

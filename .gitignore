@@ -246,3 +246,10 @@ ARCHIVE_ORG_UPDATES_PLAN.md
 # Video generation outputs
 *.mp4
 video/out/
+# Local Twitter/X cleaning scripts & temp cache
+scripts/delete-my-replies.js
+scripts/filter.js
+scripts/replies_cache.json
+scripts/smart-filter.js
+scripts/x-cleaner.js
+SCR-20261007-snjz.png

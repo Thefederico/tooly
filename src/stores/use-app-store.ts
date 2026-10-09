@@ -51,17 +51,7 @@ interface AppStoreState {
   scanProgress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null;
   setScanProgress: (progress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null) => void;
 
-  // FTP Auto-Start & Modal
-  autoStartFtp: boolean;
-  setAutoStartFtp: (val: boolean) => void;
-  ftpStartModal: {
-    isOpen: boolean;
-    ip: string;
-    isInjecting: boolean;
-  };
-  openFtpStartModal: (ip: string) => void;
-  closeFtpStartModal: () => void;
-  setIsInjectingFtp: (val: boolean) => void;
+
 
   // Local Payloads
   payloadDir: string;
@@ -119,8 +109,34 @@ export const useAppStore = create<AppStoreState>((set) => ({
     }),
 
   // PS5 & Network
-  ps5Ip: "192.168.1.100",
-  setPs5Ip: (ps5Ip) => set({ ps5Ip }),
+  ps5Ip:
+    typeof window !== "undefined"
+      ? (() => {
+          const stored = localStorage.getItem("tooly_ps5_ip");
+          if (!stored || stored === "192.168.1.100" || stored === "192.168.1.xxx") {
+            try {
+              localStorage.removeItem("tooly_ps5_ip");
+            } catch (_) {}
+            return "";
+          }
+          return stored;
+        })()
+      : "",
+  setPs5Ip: (ps5Ip) => {
+    if (typeof window !== "undefined") {
+      const trimmed = ps5Ip.trim();
+      if (trimmed && trimmed !== "192.168.1.100" && trimmed !== "192.168.1.xxx") {
+        try {
+          localStorage.setItem("tooly_ps5_ip", trimmed);
+        } catch (_) {}
+      } else {
+        try {
+          localStorage.removeItem("tooly_ps5_ip");
+        } catch (_) {}
+      }
+    }
+    set({ ps5Ip });
+  },
   showManualIp: false,
   setShowManualIp: (showManualIp) => set({ showManualIp }),
   isDiscovering: false,
@@ -134,42 +150,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
   scanProgress: null,
   setScanProgress: (scanProgress) => set({ scanProgress }),
 
-  // FTP Auto-Start & Modal
-  autoStartFtp: typeof window !== "undefined" ? localStorage.getItem("tooly_auto_start_ftp") === "true" : false,
-  setAutoStartFtp: (autoStartFtp) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("tooly_auto_start_ftp", String(autoStartFtp));
-    }
-    set({ autoStartFtp });
-  },
-  ftpStartModal: {
-    isOpen: false,
-    ip: "",
-    isInjecting: false,
-  },
-  openFtpStartModal: (ip) =>
-    set({
-      ftpStartModal: {
-        isOpen: true,
-        ip,
-        isInjecting: false,
-      },
-    }),
-  closeFtpStartModal: () =>
-    set((state) => ({
-      ftpStartModal: {
-        ...state.ftpStartModal,
-        isOpen: false,
-        isInjecting: false,
-      },
-    })),
-  setIsInjectingFtp: (isInjecting) =>
-    set((state) => ({
-      ftpStartModal: {
-        ...state.ftpStartModal,
-        isInjecting,
-      },
-    })),
+
 
   // Local Payloads
   payloadDir: "",

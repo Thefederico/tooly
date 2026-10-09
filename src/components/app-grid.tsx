@@ -10,6 +10,7 @@ import {
 import { useAppStore, AppUpdateStatus } from "../stores/use-app-store";
 import { translations } from "../lib/i18n";
 import { InstalledApp, DownloadProgressPayload } from "../lib/types";
+import { extractDisplayVersion } from "../lib/utils";
 
 interface AppGridProps {
   installedApps: InstalledApp[];
@@ -125,7 +126,9 @@ export function AppGrid({
                   <div className="text-right">
                     <span className="text-slate-500 block text-[10px]">{t.onGithubVer}</span>
                     <span className="text-cyan-300 font-bold">
-                      {state?.latestRelease?.tag_name || "—"}
+                      {state?.latestRelease
+                        ? extractDisplayVersion(state.latestRelease.tag_name, state.latestRelease.name)
+                        : "—"}
                     </span>
                   </div>
                 </div>
@@ -152,9 +155,10 @@ export function AppGrid({
                   </span>
 
                   <div className="flex items-center gap-2 ml-auto">
-                    {/* Botón Archive.org para juegos comerciales */}
+                    {/* Botón Archive.org SOLO para juegos comerciales que no son homebrew registrado */}
                     {(app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) &&
-                      !app.title_id.startsWith("PAYLOAD_") && (
+                      !app.title_id.startsWith("PAYLOAD_") &&
+                      !state?.registry?.githubRepo && (
                         <button
                           onClick={() => onOpenArchiveModal(app)}
                           title={t.archiveUpdatesBtn}
@@ -182,7 +186,9 @@ export function AppGrid({
                             ? t.installingBtn
                             : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".pkg"))
                             ? t.updateBtn
-                            : "ZIP Release"}
+                            : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".bin") || a.name.toLowerCase().endsWith(".elf"))
+                            ? (lang === "es" ? "Actualizar Payload" : "Update Payload")
+                            : "Download Release"}
                         </span>
                       </button>
                     )}
