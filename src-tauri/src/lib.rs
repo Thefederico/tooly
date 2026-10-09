@@ -1,4 +1,5 @@
-mod modules;
+pub mod modules;
+pub mod server;
 
 use modules::error::ToolyError;
 use modules::discovery::{DiscoveredPs5, DiscoveryService};
@@ -262,6 +263,16 @@ async fn start_ps5_ftp_server(ps5_ip: String) -> Result<FtpInjectionResult, Tool
     FtpPayloadInjector::inject_and_verify_ftp(&ps5_ip).await
 }
 
+#[tauri::command]
+async fn system_info() -> Result<serde_json::Value, ToolyError> {
+    Ok(serde_json::json!({
+        "app": "Tooly",
+        "version": env!("CARGO_PKG_VERSION"),
+        "is_ps5": false,
+        "default_ip": ""
+    }))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let scan_manager = Arc::new(ScanManager::default());
@@ -270,6 +281,7 @@ pub fn run() {
         .manage(scan_manager)
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            system_info,
             discover_ps5_consoles,
             start_scan_ps5_apps,
             cancel_scan,
@@ -285,5 +297,6 @@ pub fn run() {
             start_ps5_ftp_server
         ])
         .run(tauri::generate_context!())
+
         .expect("error while running tauri application");
 }

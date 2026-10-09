@@ -61,3 +61,19 @@ impl From<ToolyError> for String {
         err.to_string()
     }
 }
+
+impl axum::response::IntoResponse for ToolyError {
+    fn into_response(self) -> axum::response::Response {
+        let status = match &self {
+            Self::InvalidInput(_) => axum::http::StatusCode::BAD_REQUEST,
+            Self::FtpTimeout { .. } => axum::http::StatusCode::GATEWAY_TIMEOUT,
+            _ => axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let body = serde_json::json!({
+            "error": self.to_string(),
+            "details": self,
+        });
+        (status, axum::Json(body)).into_response()
+    }
+}
+

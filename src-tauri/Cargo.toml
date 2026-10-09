@@ -23,6 +23,16 @@ regex = "1.10"
 suppaftp = { version = "6.0", default-features = false }
 axum = "0.8"
 tower-http = { version = "0.6", features = ["fs", "cors"] }
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+mime_guess = "2"
+
+[[bin]]
+name = "tooly"
+path = "src/main.rs"
+
+[[bin]]
+name = "tooly-daemon"
+path = "src/bin/daemon.rs"
 
 [profile.release]
 codegen-units = 1
