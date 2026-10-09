@@ -100,6 +100,13 @@ export interface ArchiveOrgGameUpdate {
   description?: string | null;
 }
 
+export interface SystemInfo {
+  app: string;
+  version: string;
+  is_ps5: boolean;
+  default_ip: string;
+}
+
 export interface ScanProgressPayload {
   session_id: string;
   current_folder: string;

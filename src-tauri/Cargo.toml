@@ -4,25 +4,46 @@ version = "0.1.0"
 description = "Tooly — PS5 Homebrew App & Payload Updater"
 authors = ["Tooly Contributors"]
 edition = "2021"
+default-run = "tooly"
+
 
 [lib]
 name = "tooly_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["staticlib", "rlib"]
+
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[features]
+default = ["desktop"]
+desktop = ["dep:tauri", "dep:tauri-plugin-opener"]
+
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
+tauri = { version = "2", features = [], optional = true }
+tauri-plugin-opener = { version = "2", optional = true }
+
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream"] }
+
 regex = "1.10"
 suppaftp = { version = "6.0", default-features = false }
 axum = "0.8"
 tower-http = { version = "0.6", features = ["fs", "cors"] }
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+mime_guess = "2"
+
+[[bin]]
+name = "tooly"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[[bin]]
+name = "tooly-daemon"
+path = "src/bin/daemon.rs"
+
 
 [profile.release]
 codegen-units = 1
