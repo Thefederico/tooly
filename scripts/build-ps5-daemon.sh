@@ -31,13 +31,14 @@ TARGET="${1:-x86_64-unknown-freebsd}"
 
 if rustup target list | grep -q "${TARGET} (installed)"; then
     echo "📦 Compilando release estático para ${TARGET}..."
-    cargo build --release --bin tooly-daemon --target "${TARGET}"
+    cargo build --release --bin tooly-daemon --no-default-features --target "${TARGET}"
     TARGET_BIN="${TAURI_DIR}/target/${TARGET}/release/tooly-daemon"
 else
     echo "⚠️ Target ${TARGET} no instalado localmente en rustup. Compilando en release nativo..."
-    cargo build --release --bin tooly-daemon
+    cargo build --release --bin tooly-daemon --no-default-features
     TARGET_BIN="${TAURI_DIR}/target/release/tooly-daemon"
 fi
+
 
 echo "📦 [3/4] Empaquetando binario para PlayStation 5..."
 mkdir -p "${OUTPUT_DIR}"

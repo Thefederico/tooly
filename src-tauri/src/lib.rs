@@ -1,52 +1,57 @@
 pub mod modules;
 pub mod server;
 
-use modules::error::ToolyError;
-use modules::discovery::{DiscoveredPs5, DiscoveryService};
-use modules::dpi::{DpiInstallResponse, DpiService};
-use modules::ftp_scanner::{
-    FtpScanner, InstalledApp, ScanCompletePayload, ScanErrorPayload, ScanProgressPayload,
-    ScanSessionResponse,
-};
-use modules::ftp_injector::{FtpInjectionResult, FtpPayloadInjector};
-use modules::github::{GitHubClient, GitHubReleaseInfo};
-use modules::payloads::{LocalPayload, PayloadScanner};
-use std::collections::HashMap;
-use std::net::Ipv4Addr;
-use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, State};
+#[cfg(feature = "desktop")]
+mod desktop_handlers {
+    use crate::modules::discovery::{DiscoveredPs5, DiscoveryService};
 
-/// Gestor de sesiones de escaneo activas en background para permitir cancelación atómica
-#[derive(Default)]
-pub struct ScanManager {
-    sessions: Mutex<HashMap<String, Arc<AtomicBool>>>,
-}
+    use crate::modules::dpi::{DpiInstallResponse, DpiService};
+    use crate::modules::error::ToolyError;
+    use crate::modules::ftp_injector::{FtpInjectionResult, FtpPayloadInjector};
+    use crate::modules::ftp_scanner::{
+        FtpScanner, InstalledApp, ScanCompletePayload, ScanErrorPayload, ScanProgressPayload,
+        ScanSessionResponse,
+    };
+    use crate::modules::github::{GitHubClient, GitHubReleaseInfo};
+    use crate::modules::payloads::{LocalPayload, PayloadScanner};
+    use std::collections::HashMap;
+    use std::net::Ipv4Addr;
+    use std::str::FromStr;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+    use tauri::{AppHandle, Emitter, State};
 
-impl ScanManager {
-    pub fn register(&self, session_id: String) -> Arc<AtomicBool> {
-        let flag = Arc::new(AtomicBool::new(false));
-        let mut map = self.sessions.lock().unwrap();
-        map.insert(session_id, flag.clone());
-        flag
+
+    /// Gestor de sesiones de escaneo activas en background para permitir cancelación atómica
+    #[derive(Default)]
+    pub struct ScanManager {
+        sessions: Mutex<HashMap<String, Arc<AtomicBool>>>,
     }
 
-    pub fn cancel(&self, session_id: &str) -> bool {
-        let map = self.sessions.lock().unwrap();
-        if let Some(flag) = map.get(session_id) {
-            flag.store(true, Ordering::Relaxed);
-            true
-        } else {
-            false
+    impl ScanManager {
+        pub fn register(&self, session_id: String) -> Arc<AtomicBool> {
+            let flag = Arc::new(AtomicBool::new(false));
+            let mut map = self.sessions.lock().unwrap();
+            map.insert(session_id, flag.clone());
+            flag
+        }
+
+        pub fn cancel(&self, session_id: &str) -> bool {
+            let map = self.sessions.lock().unwrap();
+            if let Some(flag) = map.get(session_id) {
+                flag.store(true, Ordering::Relaxed);
+                true
+            } else {
+                false
+            }
+        }
+
+        pub fn remove(&self, session_id: &str) {
+            let mut map = self.sessions.lock().unwrap();
+            map.remove(session_id);
         }
     }
 
-    pub fn remove(&self, session_id: &str) {
-        let mut map = self.sessions.lock().unwrap();
-        map.remove(session_id);
-    }
-}
 
 #[tauri::command]
 async fn discover_ps5_consoles(
@@ -213,8 +218,8 @@ async fn search_archive_updates(
     title_id: String,
     game_name: Option<String>,
     current_version: Option<String>,
-) -> Result<Vec<modules::archive_org::ArchiveOrgGameUpdate>, ToolyError> {
-    let client = modules::archive_org::ArchiveOrgClient::new();
+) -> Result<Vec<crate::modules::archive_org::ArchiveOrgGameUpdate>, ToolyError> {
+    let client = crate::modules::archive_org::ArchiveOrgClient::new();
     client
         .search_updates(&title_id, game_name.as_deref(), current_version.as_deref())
         .await
@@ -252,8 +257,8 @@ async fn update_payload_via_ftp(
 }
 
 #[tauri::command]
-async fn check_app_update(repo: Option<String>) -> Result<modules::self_update::AppUpdateInfo, ToolyError> {
-    modules::self_update::SelfUpdateService::check_for_updates(repo.as_deref())
+async fn check_app_update(repo: Option<String>) -> Result<crate::modules::self_update::AppUpdateInfo, ToolyError> {
+    crate::modules::self_update::SelfUpdateService::check_for_updates(repo.as_deref())
         .await
         .map_err(ToolyError::GitHubError)
 }
@@ -297,6 +302,10 @@ pub fn run() {
             start_ps5_ftp_server
         ])
         .run(tauri::generate_context!())
-
         .expect("error while running tauri application");
+    }
 }
+
+#[cfg(feature = "desktop")]
+pub use desktop_handlers::run;
+

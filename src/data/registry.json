@@ -112,7 +112,7 @@
     "slug": "ps5sx2",
     "name": "PS5SX2 (PCSX2 PS5)",
     "description": "PlayStation 2 Emulator port for PlayStation 5.",
-    "developer": "Florinsdistortedvision",
+    "developer": "Sword",
     "category": "emulator",
     "titleId": "PPSA99203",
     "githubRepo": "Swordpdf/PS5SX2",
@@ -749,12 +749,12 @@
   {
     "id": "kodi",
     "slug": "kodi",
-    "name": "Kodi",
-    "description": "Unofficial port of the Kodi 22 media center for PS5, with a 4K GPU interface, hardware H.264, HEVC and VP9 decoding and HDR output.",
+    "name": "PS5MC (Kodi)",
+    "description": "Unofficial port of the Kodi 22 media center (PS5MC) for PS5, with a 4K GPU interface, hardware H.264, HEVC and VP9 decoding and HDR output.",
     "developer": "VivaLaVent",
     "category": "utility",
     "titleId": "PPSA99420",
-    "githubRepo": "VivaLaVent/kodi-ps5",
+    "githubRepo": "VivaLaVent/PS5MC",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
     "tags": [
@@ -937,19 +937,21 @@
   {
     "id": "romm-client",
     "slug": "romm-client",
-    "name": "RomM Client PS5",
-    "description": "Native RomM client to sync game libraries and save files from a RomM server.",
+    "name": "RommPS",
+    "description": "Syncs your emulator saves and states with a RomM server and downloads games from your RomM library.",
     "developer": "s0liton",
     "category": "utility",
-    "titleId": null,
-    "githubRepo": "s0liton/ps5-romm",
+    "titleId": "PPSA76677",
+    "githubRepo": "s0liton/RommPS",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
     "tags": [
       "app",
       "rom-manager",
-      "sync"
-    ]
+      "sync",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
   },
   {
     "id": "nativehbl",
@@ -1073,16 +1075,18 @@
     "slug": "xpsemu",
     "name": "XPSemu",
     "description": "Native PS5 port of the xemu emulator (original Xbox).",
-    "developer": "ZiZc3",
+    "developer": "AZiZ",
     "category": "emulator",
-    "titleId": null,
+    "titleId": "PPSA97358",
     "githubRepo": "ZiZc3/XPSemu",
     "firmwareMin": "1.00",
     "firmwareMax": "13.60",
     "tags": [
       "emulator",
-      "xbox"
-    ]
+      "xbox",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
   },
   {
     "id": "ps5-vault",
@@ -1100,5 +1104,345 @@
       "pc",
       "manager"
     ]
+  },
+  {
+    "id": "symphonystation5",
+    "slug": "symphonystation5",
+    "name": "SymphonyStation5",
+    "description": "A native Navidrome music client for the PlayStation 5.",
+    "developer": "TsvetomirGT",
+    "category": "media",
+    "titleId": "PPSA17641",
+    "githubRepo": "TsvetomirGT/SymphonyStation5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "media",
+      "music",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "xashps5",
+    "slug": "xashps5",
+    "name": "XashPS5",
+    "description": "Native PS5 port of Xash3D FWGS: Half-Life, Opposing Force and Blue Shift up to 4K at 60 FPS with DualSense input. Needs your own Half-Life game data.",
+    "developer": "GordonProsperoMan",
+    "category": "game",
+    "titleId": "PPSA19111",
+    "githubRepo": "GordonProsperoMan/xash3d-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "fps",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "vita5",
+    "slug": "vita5",
+    "name": "VITA5",
+    "description": "Play a PS Vita on the PS5 over one USB cable.",
+    "developer": "StonedModder",
+    "category": "utility",
+    "titleId": "PPSA39410",
+    "githubRepo": "StonedModder/VITA5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "utility",
+      "remote-play",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "stremio-plus",
+    "slug": "stremio-plus",
+    "name": "Stremio Plus",
+    "description": "Unofficial native Stremio client for PS5 with Prospero UI, add-on sync, torrent streaming, offline downloads and customizable subtitles.",
+    "developer": "LoZazaMastro",
+    "category": "media",
+    "titleId": "PPSA74126",
+    "githubRepo": "LoZazaMastro/Stremio-Plus",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "media",
+      "streaming",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "vlc",
+    "slug": "vlc",
+    "name": "VLC",
+    "description": "VLC media player for PS5: videos, music, photos, subtitles, DVD images and more.",
+    "developer": "AZiZ",
+    "category": "media",
+    "titleId": "PPSA85300",
+    "githubRepo": "ZiZc3/VLC",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "media",
+      "player",
+      "video",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "psxs5",
+    "slug": "psxs5",
+    "name": "PSXS5",
+    "description": "PSXS5 (PlayStation X Super 5): a PlayStation 1 emulator running natively on jailbroken PS5, based on PCSX-ReARMed. Cover-flow shelf, xBR upscaling, RetroAchievements, cheats.",
+    "developer": "SynoPiia",
+    "category": "emulator",
+    "titleId": "PPSA97510",
+    "githubRepo": "SynoPiia/PSXS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "ps1",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "pokemmo-prospero",
+    "slug": "pokemmo-prospero",
+    "name": "PokeMMO Prospero",
+    "description": "Runs the official, unmodified PokeMMO Linux client natively on a jailbroken PS5.",
+    "developer": "Shabbypenguin",
+    "category": "game",
+    "titleId": "PPSA98001",
+    "githubRepo": "Shabbypenguin/PokeMMO-Prospero",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "pokemon",
+      "mmo",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "swanstationps5",
+    "slug": "swanstationps5",
+    "name": "SwanStationPS5",
+    "description": "SwanStationPS5 is a PlayStation 1 emulator. It is a fork of PSXS5 created by SynoPiia that runs all games using SwanStation core.",
+    "developer": "AngelXex",
+    "category": "emulator",
+    "titleId": "PPSA98510",
+    "githubRepo": "darkxex/SwanStationPS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "ps1",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "prosperolichess",
+    "slug": "prosperolichess",
+    "name": "ProsperoLichess",
+    "description": "Native Lichess client for PS5: play online chess with the controller.",
+    "developer": "BlackBearReloaded",
+    "category": "game",
+    "titleId": "PPSA99009",
+    "githubRepo": "blackbearreloaded/ProsperoLichess",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "chess",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "surround-sound-studio",
+    "slug": "surround-sound-studio",
+    "name": "Surround Sound Studio",
+    "description": "Sends Dolby Digital, Dolby Digital Plus, DTS, AAC and TrueHD to your receiver untouched over HDMI, plus a speaker test lab with a 3D sound field.",
+    "developer": "Sain Saji",
+    "category": "utility",
+    "titleId": "PPSA99051",
+    "githubRepo": "sainsaji/PS5-Audio-Passthrough-Research",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "audio",
+      "utility",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5nes",
+    "slug": "ps5nes",
+    "name": "PS5NES",
+    "description": "Nintendo Entertainment System (NES) emulator port for PlayStation 5.",
+    "developer": "GameMaster",
+    "category": "emulator",
+    "titleId": "PPSA99204",
+    "githubRepo": "Globaleliteee/PS5NES",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "nes",
+      "retro",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5n64",
+    "slug": "ps5n64",
+    "name": "PS5N64",
+    "description": "Nintendo 64 emulator port for PlayStation 5.",
+    "developer": "GameMaster",
+    "category": "emulator",
+    "titleId": "PPSA99206",
+    "githubRepo": "Globaleliteee/PS5N64",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "n64",
+      "retro",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "nuvio-maxd",
+    "slug": "nuvio-maxd",
+    "name": "Nuvio Max'd",
+    "description": "An unofficial native Nuvio client for PS5 with synced watch progress, addon streams, episode skipping and experimental HDR10 playback.",
+    "developer": "HandshakeHackin",
+    "category": "media",
+    "titleId": "PPSA99288",
+    "githubRepo": "HandshakeHackin/Nuvio-maxd-releases",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "media",
+      "streaming",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "ps5cemu-har",
+    "slug": "ps5cemu-har",
+    "name": "PS5CEMU-HAR",
+    "description": "Wii U and 3DS emulation for jailbroken PS5, built on Cemu and Azahar, with one launcher for both.",
+    "developer": "premohq",
+    "category": "emulator",
+    "titleId": "PPSA99360",
+    "githubRepo": "premohq/PS5CEMU-HAR",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "wiiu",
+      "3ds",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "emby5",
+    "slug": "emby5",
+    "name": "Emby5",
+    "description": "A native Emby client for PlayStation 5 with media playback and optional Seerr requests.",
+    "developer": "bornaradusin",
+    "category": "media",
+    "titleId": "PPSA99515",
+    "githubRepo": "bornaradusin/Emby5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "media",
+      "streaming",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "cloud-play",
+    "slug": "cloud-play",
+    "name": "Cloud Play",
+    "description": "A Chiaki-based cloud streaming client for PS5 that streams games from the PS Plus Premium catalog.",
+    "developer": "tertiumndatur",
+    "category": "utility",
+    "titleId": "PPSA99600",
+    "githubRepo": "tertiumndatur/ps5-cloud-play",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "streaming",
+      "cloud",
+      "chiaki",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "psbox-cloud-gaming",
+    "slug": "psbox-cloud-gaming",
+    "name": "PSBox Cloud Gaming",
+    "description": "Unofficial Xbox Cloud Gaming client: stream the cloud catalog, your own games and your own Xbox (Remote Play) at 1080p60 with sound, using the DualSense as an Xbox controller.",
+    "developer": "RafaelNGP",
+    "category": "utility",
+    "titleId": "PPSA99810",
+    "githubRepo": "RafaelNGP/xbox-cloud-gaming-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "streaming",
+      "xbox",
+      "cloud",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "forwarder-manager",
+    "slug": "forwarder-manager",
+    "name": "Forwarder Manager",
+    "description": "Create and edit home-screen forwarders that launch emulators and other apps with custom art, music and arguments.",
+    "developer": "heydemoura",
+    "category": "tool",
+    "titleId": "PPSA99930",
+    "githubRepo": "heydemoura/ps5-forwarder-manager",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "forwarder",
+      "homebrew-page"
+    ],
+    "assetPattern": "\\.(zip|pkg)$"
   }
 ]
