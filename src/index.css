@@ -9,6 +9,11 @@
     --ps-border: rgba(0, 240, 255, 0.15);
   }
 
+  /* Safe Area Inset Support for Mobile/Android/iOS (Status Bar / Notches) */
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 3.5rem);
+  }
+
   body {
     background-color: var(--bg-deep);
     color: #f1f5f9;

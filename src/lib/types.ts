@@ -66,6 +66,7 @@ export interface DiscoveredPs5 {
   ftp_open: boolean;
   dpi_open: boolean;
   elf_loader_open?: boolean;
+  ps_native_open?: boolean;
 }
 
 export interface FtpInjectionResult {
@@ -120,6 +121,13 @@ export interface ScanErrorPayload {
 export interface ScanSessionResponse {
   session_id: string;
 }
+
+export type ToolyServerEvent =
+  | { type: "dpi-progress"; payload: DownloadProgressPayload }
+  | { type: "scan-progress"; payload: ScanProgressPayload }
+  | { type: "scan-app-discovered"; payload: InstalledApp }
+  | { type: "scan-complete"; payload: ScanCompletePayload }
+  | { type: "scan-error"; payload: ScanErrorPayload };
 
 export type ToolyError =
   | { type: "SfoBufferTooSmall"; message: { len: number } }

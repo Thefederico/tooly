@@ -4,6 +4,7 @@ import { useAppStore, AppUpdateStatus } from "../stores/use-app-store";
 import { tauriApi } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
 import { InstalledApp, RegistryItem, formatToolyError } from "../lib/types";
+import { isValidIpv4, isNewerVersion } from "../lib/utils";
 
 const registry = registryData as RegistryItem[];
 
@@ -17,6 +18,7 @@ export function useUpdateEngine() {
   const updateAppStatus = useAppStore((state) => state.updateAppStatus);
   const isScanningFtp = useAppStore((state) => state.isScanningFtp);
   const setIsScanningFtp = useAppStore((state) => state.setIsScanningFtp);
+  const setHasDiscoveredConsole = useAppStore((state) => state.setHasDiscoveredConsole);
   const updatingId = useAppStore((state) => state.updatingId);
   const setUpdatingId = useAppStore((state) => state.setUpdatingId);
   const progressState = useAppStore((state) => state.progressState);
@@ -90,9 +92,6 @@ export function useUpdateEngine() {
           for (const [repoKey, { app, reg }] of repoMap.entries()) {
             const rel = resultMap.get(repoKey);
             if (rel) {
-              const currentClean = app.app_ver.replace(/^[vV]/, "").trim();
-              const latestClean = rel.tag_name.replace(/^[vV]/, "").trim();
-
               const hasCompatibleAsset =
                 rel.assets &&
                 rel.assets.some((a) => {
@@ -109,7 +108,7 @@ export function useUpdateEngine() {
                   );
                 });
 
-              const isNewer = currentClean !== latestClean;
+              const isNewer = isNewerVersion(app.app_ver, rel.tag_name, rel.name);
               const hasUpdate = isNewer && Boolean(hasCompatibleAsset);
 
               stateMap[app.title_id] = {
@@ -118,7 +117,7 @@ export function useUpdateEngine() {
                 latestRelease: rel,
                 hasUpdate,
                 statusText: hasUpdate
-                  ? `${t.updateAvailable} ${rel.tag_name}`
+                  ? `${t.updateAvailable} ${rel.name || rel.tag_name}`
                   : isNewer && !hasCompatibleAsset
                   ? `${rel.tag_name} (${t.noDirectPkg})`
                   : t.upToDateBadge,
@@ -139,11 +138,15 @@ export function useUpdateEngine() {
 
       setUpdatesState(stateMap);
 
-      // Búsqueda en segundo plano en Archive.org para juegos comerciales
+      // Búsqueda en segundo plano en Archive.org para juegos comerciales (excluyendo homebrews del registro)
       for (const app of apps) {
+        const isRegisteredHomebrew = registry.some(
+          (r) => r.titleId?.toUpperCase() === app.title_id.toUpperCase()
+        );
         const isCommercialGame =
           (app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) &&
-          !app.title_id.startsWith("PAYLOAD_");
+          !app.title_id.startsWith("PAYLOAD_") &&
+          !isRegisteredHomebrew;
         if (isCommercialGame) {
           tauriApi
             .searchArchiveUpdates(app.title_id, app.app_name, app.app_ver)
@@ -179,24 +182,41 @@ export function useUpdateEngine() {
   // Scan PS5 via FTP
   const scanPs5 = useCallback(
     async (targetIp?: string) => {
-      const ip = targetIp || ps5Ip;
-      if (!ip.trim()) return;
+      const ip = (targetIp || ps5Ip).trim();
+      if (!ip) {
+        addLog(
+          lang === "es"
+            ? "⚠️ No hay IP de PS5 configurada. Usa Auto-Detectar o ingresa una IP manual."
+            : "⚠️ No PS5 IP configured. Run Auto-Detect or enter a manual IP."
+        );
+        return [];
+      }
+      if (!isValidIpv4(ip)) {
+        addLog(
+          lang === "es"
+            ? `⚠️ Dirección IP inválida: '${ip}'. Se requiere formato IPv4 (ej. 192.168.1.45).`
+            : `⚠️ Invalid IP address: '${ip}'. A valid IPv4 is required (e.g. 192.168.1.45).`
+        );
+        return [];
+      }
       setIsScanningFtp(true);
       addLog(t.logConnectingFtp(ip));
       try {
         const apps = await tauriApi.scanPs5Apps(ip);
         setInstalledApps(apps);
+        setHasDiscoveredConsole(true);
         addLog(t.logFtpDone(apps.length));
         await evaluateUpdates(apps);
         return apps;
       } catch (err: unknown) {
+        setHasDiscoveredConsole(false);
         addLog(t.logFtpError(formatToolyError(err)));
         return [];
       } finally {
         setIsScanningFtp(false);
       }
     },
-    [ps5Ip, t, addLog, setInstalledApps, setIsScanningFtp, evaluateUpdates]
+    [ps5Ip, lang, t, addLog, setInstalledApps, setHasDiscoveredConsole, setIsScanningFtp, evaluateUpdates]
   );
 
   // Update specific app or payload
@@ -271,7 +291,12 @@ export function useUpdateEngine() {
           addLog(
             `[Homebrew ZIP] ${item.installed?.app_name || titleId} (${item.latestRelease.tag_name}) se distribuye como paquete ZIP (${zipAsset.name}). Abriendo descarga directa para /data/homebrew/...`
           );
-          window.open(zipAsset.browser_download_url, "_blank");
+          try {
+            const { openUrl } = await import("@tauri-apps/plugin-opener");
+            await openUrl(zipAsset.browser_download_url);
+          } catch (_) {
+            window.open(zipAsset.browser_download_url, "_blank");
+          }
           return;
         }
 

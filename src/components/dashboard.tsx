@@ -7,13 +7,13 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { DownloadProgressPayload } from "../lib/types";
+import { subscribeServerEvents } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
 import { PsSymbols } from "./ps-symbols";
 import { DeviceScanner } from "./device-scanner";
 import { AppGrid } from "./app-grid";
 import { LogTerminal } from "./log-terminal";
 import { ArchiveModal } from "./archive-modal";
-import { FtpStartModal } from "./ftp-start-modal";
 
 import { useAppStore } from "../stores/use-app-store";
 import { usePs5Discovery } from "../hooks/use-ps5-discovery";
@@ -24,7 +24,6 @@ export function Dashboard() {
   const lang = useAppStore((state) => state.lang);
   const toggleLanguage = useAppStore((state) => state.toggleLanguage);
   const setProgressState = useAppStore((state) => state.setProgressState);
-  const ftpStartModal = useAppStore((state) => state.ftpStartModal);
 
   const t = translations[lang];
 
@@ -53,35 +52,43 @@ export function Dashboard() {
     setShowManualIp,
     isDiscovering,
     hasDiscoveredConsole,
-    setHasDiscoveredConsole,
-    payloadDir,
-    setPayloadDir,
-    localPayloads,
-    isScanningPayloads,
     discoverPs5,
-    scanPayloads,
-    startFtpServer,
   } = usePs5Discovery((autoTargetIp) => {
     scanPs5(autoTargetIp);
   });
 
-  // Listeners de eventos Tauri para progreso de descargas en tiempo real
+  // Listeners de eventos para progreso de descargas en tiempo real (Tauri Desktop o Web SSE)
   useEffect(() => {
-    const unlistenPromise = listen<DownloadProgressPayload>("dpi-progress", (event) => {
-      setProgressState(event.payload);
+    const handleProgress = (payload: DownloadProgressPayload) => {
+      setProgressState(payload);
       if (
-        event.payload.status === "installed_success" ||
-        event.payload.status === "error"
+        payload.status === "installed_success" ||
+        payload.status === "error"
       ) {
         setTimeout(() => {
           setProgressState(null);
         }, 5000);
       }
-    });
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
     };
+
+    if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+      const unlistenPromise = listen<DownloadProgressPayload>("dpi-progress", (event) => {
+        handleProgress(event.payload);
+      });
+      return () => {
+        unlistenPromise.then((unlisten) => unlisten());
+      };
+    } else {
+      // Modo Web / PS5 Daemon: suscripción Server-Sent Events (SSE)
+      const unsubscribe = subscribeServerEvents((event) => {
+        if (event.type === "dpi-progress") {
+          handleProgress(event.payload);
+        }
+      });
+      return () => {
+        unsubscribe();
+      };
+    }
   }, [setProgressState]);
 
   // Auto-comprobación pasiva de versión de Tooly y auto-detección pasiva de consola LAN al montar
@@ -95,8 +102,8 @@ export function Dashboard() {
 
   return (
     <div className="h-screen bg-[#05070f] text-slate-100 flex flex-col font-sans ambient-radial-glow select-none overflow-hidden">
-      {/* Top Header / Navigation Bar */}
-      <header className="glass-panel px-6 py-3.5 flex items-center justify-between border-b border-cyan-500/20 shrink-0 z-50">
+      {/* Top Header / Navigation Bar with Mobile Safe Area Support */}
+      <header className="glass-panel px-6 pt-12 pb-3.5 safe-top flex items-center justify-between border-b border-cyan-500/20 shrink-0 z-50">
         <div className="flex items-center gap-3">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl blur-xs opacity-70 group-hover:opacity-100 transition duration-300"></div>
@@ -231,17 +238,13 @@ export function Dashboard() {
             isScanningFtp={isScanningFtp}
             onDiscoverPs5={discoverPs5}
             onScanPs5={() => {
-              setHasDiscoveredConsole(true);
-              scanPs5();
+              if (!ps5Ip.trim()) {
+                discoverPs5();
+              } else {
+                scanPs5();
+              }
             }}
             appsCount={installedApps.length}
-            onStartFtp={() => startFtpServer(ps5Ip)}
-            isStartingFtp={ftpStartModal.isInjecting}
-            payloadDir={payloadDir}
-            onPayloadDirChange={setPayloadDir}
-            isScanningPayloads={isScanningPayloads}
-            onScanPayloads={scanPayloads}
-            localPayloads={localPayloads}
           />
 
           <LogTerminal logs={activityLogs} isCopied={isCopied} onCopyLogs={copyLogs} />
@@ -255,15 +258,18 @@ export function Dashboard() {
             updatingId={updatingId}
             progressState={progressState}
             isScanningFtp={isScanningFtp}
-            onScanPs5={() => scanPs5()}
+            onScanPs5={() => {
+              if (!ps5Ip.trim()) {
+                discoverPs5();
+              } else {
+                scanPs5();
+              }
+            }}
             onUpdateApp={updateApp}
             onOpenArchiveModal={handleOpenArchiveModal}
           />
         </section>
       </main>
-
-      {/* Modal de Inicio / Inyección de Payload FTP */}
-      <FtpStartModal onConfirm={(ip) => startFtpServer(ip)} />
 
       {/* Modal de Actualizaciones de Archive.org */}
       <ArchiveModal onInstallDirect={handleInstallArchiveDirect} />
