@@ -10,7 +10,9 @@ import {
   FtpInjectionResult,
   ArchiveOrgGameUpdate,
   ToolyServerEvent,
+  SystemInfo,
 } from "./types";
+
 
 /**
  * Detecta si el frontend está ejecutándose dentro del contenedor de escritorio nativo de Tauri v2.
@@ -185,4 +187,9 @@ export const tauriApi = {
   startPs5FtpServer: async (ps5Ip: string): Promise<FtpInjectionResult> => {
     return await executeCommand<FtpInjectionResult>("start_ps5_ftp_server", { ps5Ip });
   },
+
+  getSystemInfo: async (): Promise<SystemInfo> => {
+    return await executeCommand<SystemInfo>("system_info");
+  },
 };
+

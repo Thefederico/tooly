@@ -7,7 +7,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { DownloadProgressPayload } from "../lib/types";
-import { subscribeServerEvents } from "../lib/tauri-client";
+import { subscribeServerEvents, tauriApi } from "../lib/tauri-client";
 import { translations } from "../lib/i18n";
 import { PsSymbols } from "./ps-symbols";
 import { DeviceScanner } from "./device-scanner";
@@ -91,14 +91,25 @@ export function Dashboard() {
     }
   }, [setProgressState]);
 
-  // Auto-comprobación pasiva de versión de Tooly y auto-detección pasiva de consola LAN al montar
+  // Auto-comprobación pasiva de versión de Tooly, modo PS5 local y auto-detección pasiva de consola LAN al montar
   useEffect(() => {
     checkToolyAppUpdate(true);
-    const autoScanTimer = setTimeout(() => {
-      discoverPs5();
-    }, 600);
-    return () => clearTimeout(autoScanTimer);
+
+    tauriApi
+      .getSystemInfo()
+      .then((info) => {
+        if (info.is_ps5 && info.default_ip) {
+          setPs5Ip(info.default_ip);
+          scanPs5(info.default_ip);
+        } else {
+          discoverPs5();
+        }
+      })
+      .catch(() => {
+        discoverPs5();
+      });
   }, []);
+
 
   return (
     <div className="h-screen bg-[#05070f] text-slate-100 flex flex-col font-sans ambient-radial-glow select-none overflow-hidden">
