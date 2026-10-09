@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Tooly — PS5 Homebrew App & Payload Updater"
 authors = ["Tooly Contributors"]
 edition = "2021"
+default-run = "tooly"
+
 
 [lib]
 name = "tooly_lib"
