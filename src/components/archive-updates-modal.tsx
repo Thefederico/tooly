@@ -129,23 +129,35 @@ export function ArchiveUpdatesModal({
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => onInstallDirect(item.download_url, item.file_name)}
-                    disabled={isInstalling}
-                    className="px-4 py-2 bg-[#2c5874] hover:bg-[#396e91] active:scale-[0.98] text-[#eceff4] text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                  >
-                    {isCurrentInstalling ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>{t.installingBtn}</span>
-                      </>
-                    ) : (
-                      <>
-                        <HardDrive className="w-3.5 h-3.5" />
-                        <span>{t.installDirectDpi}</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={item.download_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Ver en Archive.org"
+                      className="p-2 rounded-lg bg-[#1c212e] hover:bg-[#252c3d] text-[#828fa3] hover:text-[#eceff4] transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+
+                    <button
+                      onClick={() => onInstallDirect(item.download_url, item.file_name)}
+                      disabled={isInstalling}
+                      className="px-4 py-2 bg-[#2c5874] hover:bg-[#396e91] active:scale-[0.98] text-[#eceff4] text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {isCurrentInstalling ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>{t.installingBtn}</span>
+                        </>
+                      ) : (
+                        <>
+                          <HardDrive className="w-3.5 h-3.5" />
+                          <span>{t.installDirectDpi}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               );
             })

@@ -1,0 +1,79 @@
+name: Submit a New App / Payload
+description: Add your tool to the Tooly registry
+title: "[App Submission]: <App Name>"
+labels: ["app-submission", "registry"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for submitting your app to Tooly! Please fill out the details below. If your app is a native PS5 app (PPSA), we highly recommend submitting it to the [homebrew.page catalog](https://github.com/blackbearreloaded/ps5-homebrew-catalog/blob/main/docs/submitting.md) first, as Tooly syncs with them automatically.
+  - type: input
+    id: app-name
+    attributes:
+      label: App Name
+      description: The name of your application, payload, or tool.
+      placeholder: e.g., My Awesome Payload
+    validations:
+      required: true
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: A short description of what your tool does (max 100 chars).
+      placeholder: An all-in-one desktop utility...
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Select the category that best fits your tool.
+      options:
+        - utility
+        - payload
+        - emulator
+        - game
+        - media
+        - tool
+    validations:
+      required: true
+  - type: input
+    id: github-repo
+    attributes:
+      label: GitHub Repository
+      description: The owner/repo format for GitHub (used to fetch releases). Leave blank if your tool is hosted elsewhere.
+      placeholder: e.g., YourUsername/YourRepo
+    validations:
+      required: false
+  - type: input
+    id: direct-url
+    attributes:
+      label: Direct Download URL (Optional)
+      description: Direct HTTP(S) link to the PKG/BIN for tools not hosted on GitHub. Provide this instead of a GitHub repository.
+      placeholder: e.g., https://dl.your-domain.com/releases/app.pkg
+    validations:
+      required: false
+  - type: input
+    id: title-id
+    attributes:
+      label: Title ID (Optional)
+      description: The PPSA/CUSA ID if it's a native app. Leave blank for payloads or PC tools.
+      placeholder: PPSAXXXXX
+    validations:
+      required: false
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated tags (e.g., payload, cheats, daemon).
+      placeholder: payload, cheats
+    validations:
+      required: true
+  - type: input
+    id: asset-pattern
+    attributes:
+      label: Asset Pattern (Regex) (Optional)
+      description: Regex to match your release asset. Required if your release contains multiple files and we need to grab the right one (.bin, .pkg, etc).
+      placeholder: \.bin$
+    validations:
+      required: false

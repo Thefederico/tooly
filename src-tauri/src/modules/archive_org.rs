@@ -38,6 +38,7 @@ struct ArchiveSearchBody {
 #[derive(Debug, Deserialize)]
 struct ArchiveSearchDoc {
     identifier: String,
+    #[allow(dead_code)]
     title: Option<String>,
 }
 
@@ -50,6 +51,7 @@ struct ArchiveMetadataFilesResponse {
 struct ArchiveFileItem {
     name: String,
     size: Option<serde_json::Value>,
+    #[allow(dead_code)]
     format: Option<String>,
 }
 
