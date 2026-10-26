@@ -27,6 +27,13 @@ export const translations = {
     autoDetect: "Auto-detect",
     autoDetecting: "Detecting...",
     autoDetectTooltip: "Scan local LAN subnet (/24) for active PS5 consoles (:2121 / :12800)",
+    autoDetectRadarBtn: "Auto-Detect Console",
+    autoDetectRadarScanning: "Searching LAN Subnet...",
+    autoDetectRadarSubtext: "Scans ports :2121 (FTP) & :12800 (DPI)",
+    manualIpToggle: "Manual IP configuration",
+    consoleFoundStatus: "Console detected on LAN",
+    consoleNotFoundStatus: "No console detected yet",
+    rescanRadar: "Scan Subnet Again",
     appsDetected: "Apps detected on console:",
     scannedPaths: "Scanned paths:",
 
@@ -43,6 +50,9 @@ export const translations = {
     copied: "Copied",
     copyLogsTooltip: "Copy all log entries to clipboard",
 
+    // FTP Status Notice
+    logFtpClosedNotice: (ip: string) => `Console found at ${ip}, but FTP (:2121) is closed. Please enable FTP via etaHEN or Itemzflow on your PS5 to scan apps.`,
+
     // Right Panel: Apps & Updates
     installedAppsTitle: "Installed Apps & Updates",
     installedAppsSubtitle: "Remote PARAM.SFO detection & direct sync with GitHub Releases",
@@ -52,7 +62,15 @@ export const translations = {
     scanPs5Now: "Scan PS5 Now",
     scanningConsole: "Scanning console...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "All",
+    filterUpdates: "Updates",
+    filterHomebrew: "Homebrew",
+    filterGames: "Games",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Search app by name or Title ID...",
+    standalonePayload: "Standalone payload",
+    noDirectPkg: "No direct PKG/ZIP",
     updateBadge: "Update",
     upToDateBadge: "Up to date",
     installedVer: "Installed",
@@ -72,6 +90,18 @@ export const translations = {
     archiveModalTitle: "Updates on Archive.org",
     archiveModalSubtitle: "Direct .pkg installation without using PC disk space",
 
+    // Payload Manager & FTP Injection
+    injectFtpBtn: "Inject FTP Server (ftpsrv)",
+    injectingFtp: "Injecting FTP server...",
+    ftpInjectedSuccess: "FTP Server successfully started on :2121!",
+    servicesStatus: "Console Services",
+    payloadManagerDetected: "Payload Manager active (:8084)",
+    elfLoaderDetected: "ELF Loader active",
+    ftpOfflineWarning: "FTP server is offline on PS5.",
+    injectPayloadBtn: "Inject",
+    injectingPayload: "Sending payload...",
+    payloadInjectedSuccess: (name: string, port: number) => `Payload ${name} successfully sent to port ${port}`,
+
     // Logs
     logInit: "Tooly Core v0.1.0 initialized. Ready to scan PS5 LAN.",
     logDiscovering: "Scanning local subnet for PS5 consoles (:2121 / :12800)...",
@@ -87,6 +117,12 @@ export const translations = {
     logNoPkgFound: (tag: string) => `No .pkg file found in release ${tag}.`,
     logDpiSuccess: (file: string) => `Installation of ${file} completed on PS5.`,
     logDpiError: (file: string) => `Error during installation of ${file}.`,
+    logInjectingFtp: (ip: string) => `Starting FTP injection to ${ip} via Payload Manager / ELF Loader...`,
+    logFtpInjectDone: (msg: string) => `FTP Injection: ${msg}`,
+    logFtpInjectError: (err: string) => `FTP Injection failed: ${err}`,
+    logInjectingPayload: (name: string, ip: string, port: number) => `Injecting ${name} to ${ip}:${port}...`,
+    logPayloadInjectSuccess: (name: string, port: number) => `Payload ${name} delivered to port ${port}.`,
+    logPayloadInjectError: (err: string) => `Payload delivery error: ${err}`,
   },
   es: {
     // Header
@@ -114,6 +150,13 @@ export const translations = {
     autoDetect: "Auto-detectar",
     autoDetecting: "Buscando...",
     autoDetectTooltip: "Escanear la subred LAN (/24) buscando consolas PS5 activas (:2121 / :12800)",
+    autoDetectRadarBtn: "Auto-Detectar Consola",
+    autoDetectRadarScanning: "Buscando en la subred LAN...",
+    autoDetectRadarSubtext: "Escanea puertos :2121 (FTP) y :12800 (DPI)",
+    manualIpToggle: "Configuración manual de IP",
+    consoleFoundStatus: "Consola detectada en LAN",
+    consoleNotFoundStatus: "Sin consola detectada aún",
+    rescanRadar: "Volver a buscar en subred",
     appsDetected: "Apps detectadas en consola:",
     scannedPaths: "Rutas escaneadas:",
 
@@ -130,6 +173,9 @@ export const translations = {
     copied: "Copiado",
     copyLogsTooltip: "Copiar todo el registro al portapapeles",
 
+    // FTP Status Notice
+    logFtpClosedNotice: (ip: string) => `Consola detectada en ${ip}, pero el FTP (:2121) está inactivo. Por favor activa el servidor FTP en tu PS5 mediante etaHEN o Itemzflow para escanear apps.`,
+
     // Right Panel: Apps & Updates
     installedAppsTitle: "Aplicaciones Instaladas & Actualizaciones",
     installedAppsSubtitle: "Detección remota de PARAM.SFO y sincronización directa con GitHub Releases",
@@ -139,7 +185,15 @@ export const translations = {
     scanPs5Now: "Escanear PS5 Ahora",
     scanningConsole: "Escaneando consola...",
 
-    // App Card
+    // App Card & Filters
+    filterAll: "Todas",
+    filterUpdates: "Actualizaciones",
+    filterHomebrew: "Homebrew",
+    filterGames: "Juegos",
+    filterPayloads: "Payloads",
+    searchPlaceholder: "Buscar por nombre o Title ID...",
+    standalonePayload: "Payload local/directo",
+    noDirectPkg: "Sin PKG/ZIP directo",
     updateBadge: "Update",
     upToDateBadge: "Al día",
     installedVer: "Instalada",
@@ -159,6 +213,18 @@ export const translations = {
     archiveModalTitle: "Actualizaciones en Archive.org",
     archiveModalSubtitle: "Instalación directa de .pkg sin ocupar espacio en la PC",
 
+    // Payload Manager & FTP Injection
+    injectFtpBtn: "Inyectar Servidor FTP (ftpsrv)",
+    injectingFtp: "Inyectando servidor FTP...",
+    ftpInjectedSuccess: "¡Servidor FTP iniciado con éxito en :2121!",
+    servicesStatus: "Servicios de Consola",
+    payloadManagerDetected: "Payload Manager activo (:8084)",
+    elfLoaderDetected: "ELF Loader activo",
+    ftpOfflineWarning: "Servidor FTP desconectado en la PS5.",
+    injectPayloadBtn: "Inyectar",
+    injectingPayload: "Enviando payload...",
+    payloadInjectedSuccess: (name: string, port: number) => `Payload ${name} enviado exitosamente al puerto ${port}`,
+
     // Logs
     logInit: "Tooly Core v0.1.0 inicializado. Listo para escanear PS5 LAN.",
     logDiscovering: "Escaneando subred LAN en busca de consolas PS5 (:2121 / :12800)...",
@@ -174,6 +240,12 @@ export const translations = {
     logNoPkgFound: (tag: string) => `No se encontró un archivo .pkg en el release ${tag}.`,
     logDpiSuccess: (file: string) => `Instalación de ${file} completada en PS5.`,
     logDpiError: (file: string) => `Error durante la instalación de ${file}.`,
+    logInjectingFtp: (ip: string) => `Iniciando inyección de FTP a ${ip} vía Payload Manager / ELF Loader...`,
+    logFtpInjectDone: (msg: string) => `Inyección FTP: ${msg}`,
+    logFtpInjectError: (err: string) => `Fallo en inyección FTP: ${err}`,
+    logInjectingPayload: (name: string, ip: string, port: number) => `Inyectando ${name} en ${ip}:${port}...`,
+    logPayloadInjectSuccess: (name: string, port: number) => `Payload ${name} transmitido al puerto ${port}.`,
+    logPayloadInjectError: (err: string) => `Error en envío de payload: ${err}`,
   },
 } as const;
 

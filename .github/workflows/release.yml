@@ -1,9 +1,10 @@
 name: Release Build
 
 on:
-  push:
-    tags:
-      - 'v*'
+  # Deshabilitado para ahorrar minutos de runners multiplataforma (macOS 10x, Windows 2x)
+  # push:
+  #   tags:
+  #     - 'v*'
   workflow_dispatch:
 
 jobs:

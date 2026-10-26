@@ -123,7 +123,7 @@
       "ps2",
       "games"
     ],
-    "assetPattern": "\\.pkg$"
+    "assetPattern": "\\.(pkg|zip)$"
   },
   {
     "id": "retroarch",
@@ -898,5 +898,207 @@
       "homebrew-page"
     ],
     "assetPattern": "\\.(zip|pkg)$"
+  },
+  {
+    "id": "onionhen",
+    "slug": "onionhen",
+    "name": "OnionHEN",
+    "description": "Modular homebrew enabler and Toolbox for jailbroken PS5 consoles, built on etaHEN.",
+    "developer": "aydencharles",
+    "category": "payload",
+    "titleId": null,
+    "githubRepo": "aydencharles/onionHEN",
+    "firmwareMin": "3.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "payload",
+      "hen",
+      "cheats",
+      "overlay"
+    ]
+  },
+  {
+    "id": "kylin-core",
+    "slug": "kylin-core",
+    "name": "Kylin Core",
+    "description": "Persistent daemon-based cheat tool for jailbroken PS5 consoles with web UI.",
+    "developer": "aydencharles",
+    "category": "payload",
+    "titleId": null,
+    "githubRepo": "aydencharles/kylin-core-release",
+    "firmwareMin": "3.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "payload",
+      "cheats",
+      "daemon"
+    ]
+  },
+  {
+    "id": "romm-client",
+    "slug": "romm-client",
+    "name": "RomM Client PS5",
+    "description": "Native RomM client to sync game libraries and save files from a RomM server.",
+    "developer": "s0liton",
+    "category": "utility",
+    "titleId": null,
+    "githubRepo": "s0liton/ps5-romm",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "app",
+      "rom-manager",
+      "sync"
+    ]
+  },
+  {
+    "id": "nativehbl",
+    "slug": "nativehbl",
+    "name": "Nativehbl",
+    "description": "Native SDL2-based Homebrew Launcher alternative to websrv.",
+    "developer": "Rufidj",
+    "category": "utility",
+    "titleId": null,
+    "githubRepo": "Rufidj/Nativehbl",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "launcher",
+      "homebrew"
+    ]
+  },
+  {
+    "id": "ps5-payload-manager",
+    "slug": "ps5-payload-manager",
+    "name": "PS5 Payload Manager",
+    "description": "Modern web-based dashboard for managing, importing, and automatically loading payloads.",
+    "developer": "itsPLK",
+    "category": "tool",
+    "titleId": null,
+    "githubRepo": "itsPLK/ps5-payload-manager",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "payloads",
+      "web"
+    ]
+  },
+  {
+    "id": "wolf4sdl-ps5",
+    "slug": "wolf4sdl-ps5",
+    "name": "Wolf4SDL PS5",
+    "description": "Native PS5 port of the Wolfenstein 3D engine (shareware included).",
+    "developer": "alex-free",
+    "category": "game",
+    "titleId": null,
+    "githubRepo": "alex-free/wolf4sdl-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "game",
+      "port",
+      "wolfenstein"
+    ]
+  },
+  {
+    "id": "rpcs3-ps5",
+    "slug": "rpcs3-ps5",
+    "name": "RPCS3 PS5 (Experimental)",
+    "description": "Experimental project to port the RPCS3 emulator to the PS5 as a native title.",
+    "developer": "lavavex",
+    "category": "emulator",
+    "titleId": null,
+    "githubRepo": "lavavex/rpcs3-PS5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "ps3",
+      "wip"
+    ]
+  },
+  {
+    "id": "ghostpad",
+    "slug": "ghostpad",
+    "name": "Ghostpad",
+    "description": "Payload for virtual controller creation and input redirection over TCP.",
+    "developer": "StonedModder",
+    "category": "payload",
+    "titleId": null,
+    "githubRepo": "StonedModder/Ghostpad",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "payload",
+      "controller",
+      "remote"
+    ]
+  },
+  {
+    "id": "porkfolio",
+    "slug": "porkfolio",
+    "name": "Porkfolio",
+    "description": "All-in-one desktop utility for jailbroken PS5 consoles.",
+    "developer": "StonedModder",
+    "category": "tool",
+    "titleId": null,
+    "githubRepo": "StonedModder/Porkfolio",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "pc",
+      "manager"
+    ]
+  },
+  {
+    "id": "orbit-store",
+    "slug": "orbit-store",
+    "name": "Orbit Store",
+    "description": "Modern homebrew download manager and store for jailbroken PS5 consoles.",
+    "developer": "saawant12",
+    "category": "utility",
+    "titleId": null,
+    "githubRepo": "saawant12/orbit-store-ps5",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "store",
+      "downloader"
+    ]
+  },
+  {
+    "id": "xpsemu",
+    "slug": "xpsemu",
+    "name": "XPSemu",
+    "description": "Native PS5 port of the xemu emulator (original Xbox).",
+    "developer": "ZiZc3",
+    "category": "emulator",
+    "titleId": null,
+    "githubRepo": "ZiZc3/XPSemu",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "emulator",
+      "xbox"
+    ]
+  },
+  {
+    "id": "ps5-vault",
+    "slug": "ps5-vault",
+    "name": "PS5-Vault",
+    "description": "Desktop application for managing and transferring PPSA game backups.",
+    "developer": "NookieAI",
+    "category": "tool",
+    "titleId": null,
+    "githubRepo": "NookieAI/PS5-Vault",
+    "firmwareMin": "1.00",
+    "firmwareMax": "13.60",
+    "tags": [
+      "tool",
+      "pc",
+      "manager"
+    ]
   }
 ]
