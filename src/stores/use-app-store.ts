@@ -7,6 +7,7 @@ import {
   RegistryItem,
   GitHubReleaseInfo,
   ArchiveOrgGameUpdate,
+  Ps5ServicesStatus,
 } from "../lib/types";
 import { Language, getSavedOrSystemLanguage, saveLanguage, translations } from "../lib/i18n";
 
@@ -51,7 +52,9 @@ interface AppStoreState {
   scanProgress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null;
   setScanProgress: (progress: { currentFolder: string; scannedCount: number; totalEstimated: number; percentage: number } | null) => void;
 
-
+  // PS5 Console Services
+  consoleServices: Ps5ServicesStatus | null;
+  setConsoleServices: (status: Ps5ServicesStatus | null) => void;
 
   // Local Payloads
   payloadDir: string;
@@ -60,6 +63,14 @@ interface AppStoreState {
   setLocalPayloads: (payloads: LocalPayload[]) => void;
   isScanningPayloads: boolean;
   setIsScanningPayloads: (val: boolean) => void;
+  isSendingPayload: boolean;
+  setIsSendingPayload: (val: boolean) => void;
+
+  // UI Drawers
+  isPayloadsDrawerOpen: boolean;
+  setIsPayloadsDrawerOpen: (val: boolean) => void;
+  isLogsDrawerOpen: boolean;
+  setIsLogsDrawerOpen: (val: boolean) => void;
 
   // Apps & Updates
   installedApps: InstalledApp[];
@@ -150,7 +161,9 @@ export const useAppStore = create<AppStoreState>((set) => ({
   scanProgress: null,
   setScanProgress: (scanProgress) => set({ scanProgress }),
 
-
+  // PS5 Console Services
+  consoleServices: null,
+  setConsoleServices: (consoleServices) => set({ consoleServices }),
 
   // Local Payloads
   payloadDir: "",
@@ -159,6 +172,14 @@ export const useAppStore = create<AppStoreState>((set) => ({
   setLocalPayloads: (localPayloads) => set({ localPayloads }),
   isScanningPayloads: false,
   setIsScanningPayloads: (isScanningPayloads) => set({ isScanningPayloads }),
+  isSendingPayload: false,
+  setIsSendingPayload: (isSendingPayload) => set({ isSendingPayload }),
+
+  // UI Drawers
+  isPayloadsDrawerOpen: false,
+  setIsPayloadsDrawerOpen: (isPayloadsDrawerOpen) => set({ isPayloadsDrawerOpen }),
+  isLogsDrawerOpen: false,
+  setIsLogsDrawerOpen: (isLogsDrawerOpen) => set({ isLogsDrawerOpen }),
 
   // Apps & Updates
   installedApps: [],
@@ -202,7 +223,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
   addLog: (msg) => {
     const timestamp = new Date().toLocaleTimeString();
     set((state) => ({
-      activityLogs: [`[${timestamp}] ${msg}`, ...state.activityLogs.slice(0, 40)],
+      activityLogs: [`[${timestamp}] ${msg}`, ...state.activityLogs.slice(0, 50)],
     }));
   },
   clearLogs: () => set({ activityLogs: [] }),

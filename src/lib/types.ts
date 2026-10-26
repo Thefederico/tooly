@@ -46,6 +46,7 @@ export interface RegistryItem {
   firmwareMax: string;
   tags: string[];
   assetPattern?: string;
+  repo?: string; // backwards compatibility
 }
 
 export interface DpiInstallResponse {
@@ -98,6 +99,12 @@ export interface ArchiveOrgGameUpdate {
   is_backport: boolean;
   is_recommended: boolean;
   description?: string | null;
+}
+
+export interface Ps5ServicesStatus {
+  ftp_open: boolean;
+  payload_manager_open: boolean;
+  elf_loader_port: number | null;
 }
 
 export interface ScanProgressPayload {
@@ -182,6 +189,3 @@ export function formatToolyError(err: unknown): string {
 
   return (err as Error).message || JSON.stringify(err);
 }
-
-
-

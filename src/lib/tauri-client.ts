@@ -10,6 +10,7 @@ import {
   FtpInjectionResult,
   ArchiveOrgGameUpdate,
   ToolyServerEvent,
+  Ps5ServicesStatus,
 } from "./types";
 
 /**
@@ -184,5 +185,33 @@ export const tauriApi = {
 
   startPs5FtpServer: async (ps5Ip: string): Promise<FtpInjectionResult> => {
     return await executeCommand<FtpInjectionResult>("start_ps5_ftp_server", { ps5Ip });
+  },
+
+  checkPs5Services: async (ip: string): Promise<Ps5ServicesStatus> => {
+    return await executeCommand<Ps5ServicesStatus>("check_ps5_services", { ip });
+  },
+
+  injectFtpServer: async (
+    ip: string,
+    preferredPort?: number,
+    localElfPath?: string
+  ): Promise<string> => {
+    return await executeCommand<string>("inject_ftp_server", {
+      ip,
+      preferredPort,
+      localElfPath,
+    });
+  },
+
+  injectLocalPayload: async (
+    ip: string,
+    port: number,
+    filePath: string
+  ): Promise<string> => {
+    return await executeCommand<string>("inject_local_payload", {
+      ip,
+      port,
+      filePath,
+    });
   },
 };

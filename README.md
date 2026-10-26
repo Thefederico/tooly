@@ -391,10 +391,29 @@ Tooly works flawlessly with any jailbreakable PS5 firmware (including 1.xx, 2.xx
 
 ---
 
-## 🤝 Contributing & Documentation
+## 🔒 Security & Console Ports Reference
 
-*   [Documentation & Architecture Guides](docs/README.md)
-*   [Network & Ports Detailed Guide](docs/network-ports.md)
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| `2121` | FTP | Reading installed metadata & uploading payloads |
+| `9021` | Raw TCP | elfldr payload loader (kernel execution) |
+| `9090` / `9099` | TCP Socket | etaHEN command socket & Save Mounter microservices |
+| `12800` | HTTP / DPI | etaHEN Direct Package Installer trigger |
+| `8844` / `8888` / `10101` | HTTP | PS5 web daemons (PKG-Manager, WebFileManager, ShadowMount+) |
+
+---
+
+## 📚 Technical Manuals & Engineering Specs
+
+- **[PlayStation 5 Systems & Engineering Playbook](docs/PS5_SYSTEMS_AND_PLAYBOOK.md)**: Comprehensive technical specification covering PS5 storage forensics, ShadowMount live exFAT patching (`CE-107098-5`), hardware SAMU savegame cryptographic re-signing, and Rust backend implementation designs.
+- **[Documentation & Architecture Guides](docs/README.md)**
+- **[Network & Ports Detailed Guide](docs/network-ports.md)**
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please check out [SUBMITTING_APPS.md](SUBMITTING_APPS.md) to add apps to the community registry.
 
 ## 📄 License & Credits
 

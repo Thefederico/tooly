@@ -9,6 +9,7 @@ use modules::ftp_scanner::{
 };
 use modules::ftp_injector::{FtpInjectionResult, FtpPayloadInjector};
 use modules::github::{GitHubClient, GitHubReleaseInfo};
+use modules::payload_injector::{PayloadInjectorService, Ps5ServicesStatus};
 use modules::payloads::{LocalPayload, PayloadScanner};
 use std::collections::HashMap;
 use std::net::Ipv4Addr;
@@ -262,6 +263,33 @@ async fn start_ps5_ftp_server(ps5_ip: String) -> Result<FtpInjectionResult, Tool
     FtpPayloadInjector::inject_and_verify_ftp(&ps5_ip).await
 }
 
+#[tauri::command]
+async fn check_ps5_services(ip: String) -> Result<Ps5ServicesStatus, String> {
+    Ok(PayloadInjectorService::check_services(&ip).await)
+}
+
+#[tauri::command]
+async fn inject_ftp_server(
+    ip: String,
+    preferred_port: Option<u16>,
+    local_elf_path: Option<String>,
+) -> Result<String, String> {
+    PayloadInjectorService::inject_ftp_server(&ip, preferred_port, local_elf_path.as_deref()).await
+}
+
+#[tauri::command]
+async fn inject_local_payload(
+    ip: String,
+    port: u16,
+    file_path: String,
+) -> Result<String, String> {
+    let bytes = tokio::fs::read(&file_path)
+        .await
+        .map_err(|e| format!("Error leyendo payload '{file_path}': {e}"))?;
+    PayloadInjectorService::inject_via_socket(&ip, port, &bytes).await?;
+    Ok(format!("Payload enviado exitosamente a {ip}:{port}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let scan_manager = Arc::new(ScanManager::default());
@@ -282,7 +310,10 @@ pub fn run() {
             search_archive_updates,
             install_archive_update_direct,
             update_payload_via_ftp,
-            start_ps5_ftp_server
+            start_ps5_ftp_server,
+            check_ps5_services,
+            inject_ftp_server,
+            inject_local_payload
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
