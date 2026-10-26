@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { InstalledApp, LocalPayload, GitHubReleaseInfo, DpiInstallResponse, DiscoveredPs5, AppUpdateInfo } from "./types";
+import { InstalledApp, LocalPayload, GitHubReleaseInfo, DpiInstallResponse, DiscoveredPs5, AppUpdateInfo, Ps5ServicesStatus } from "./types";
 
 export const tauriApi = {
   checkAppUpdate: async (repo?: string): Promise<AppUpdateInfo> => {
@@ -71,6 +71,34 @@ export const tauriApi = {
       downloadUrl,
       newFilename,
       newVersion,
+    });
+  },
+
+  checkPs5Services: async (ip: string): Promise<Ps5ServicesStatus> => {
+    return await invoke<Ps5ServicesStatus>("check_ps5_services", { ip });
+  },
+
+  injectFtpServer: async (
+    ip: string,
+    preferredPort?: number,
+    localElfPath?: string
+  ): Promise<string> => {
+    return await invoke<string>("inject_ftp_server", {
+      ip,
+      preferredPort,
+      localElfPath,
+    });
+  },
+
+  injectLocalPayload: async (
+    ip: string,
+    port: number,
+    filePath: string
+  ): Promise<string> => {
+    return await invoke<string>("inject_local_payload", {
+      ip,
+      port,
+      filePath,
     });
   },
 };

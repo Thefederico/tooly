@@ -1,30 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import registryData from "../data/registry.json";
-import { RegistryItem, InstalledApp, LocalPayload, GitHubReleaseInfo, DownloadProgressPayload, AppUpdateInfo } from "../lib/types";
+import {
+  RegistryItem,
+  InstalledApp,
+  LocalPayload,
+  GitHubReleaseInfo,
+  DownloadProgressPayload,
+  AppUpdateInfo,
+  ArchiveOrgGameUpdate,
+} from "../lib/types";
 import { tauriApi } from "../lib/tauri-client";
 import { Language, getSavedOrSystemLanguage, saveLanguage, translations } from "../lib/i18n";
 import { PsSymbols } from "./ps-symbols";
 import { listen } from "@tauri-apps/api/event";
 import {
   RefreshCw,
-  DownloadCloud,
-  Folder,
-  Wifi,
-  Sparkles,
+  Search,
+  HardDrive,
   Terminal,
-  Layers,
-  ShieldCheck,
-  CheckCircle2,
-  Copy,
-  Check,
-  Languages,
-  Radar,
-  ArrowUpCircle,
+  ArrowDownToLine,
   ExternalLink,
+  Radar,
+  Sparkles,
   Database,
+  ArrowUpCircle,
+  FileCode2,
+  Folder,
+  Layers,
+  CheckCircle2,
+  Send,
+  Zap,
 } from "lucide-react";
 import { ArchiveUpdatesModal } from "./archive-updates-modal";
-import { ArchiveOrgGameUpdate } from "../lib/types";
+import { PayloadsDrawer } from "./payloads-drawer";
+import { TerminalDrawer } from "./terminal-drawer";
 
 interface AppUpdateStatus {
   installed?: InstalledApp;
@@ -52,6 +61,14 @@ export function Dashboard() {
   const [isScanningPayloads, setIsScanningPayloads] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isSendingPayload, setIsSendingPayload] = useState(false);
+
+  const [isInjectingFtp, setIsInjectingFtp] = useState(false);
+  const [consoleServices, setConsoleServices] = useState<{
+    ftp_open: boolean;
+    payload_manager_open: boolean;
+    elf_loader_port: number | null;
+  } | null>(null);
 
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
   const [localPayloads, setLocalPayloads] = useState<LocalPayload[]>([]);
@@ -65,7 +82,15 @@ export function Dashboard() {
   const [isCheckingAppUpdate, setIsCheckingAppUpdate] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Modal de Archive.org
+  // Filtros y Búsqueda
+  const [activeFilter, setActiveFilter] = useState<"all" | "updates" | "homebrew" | "games">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Drawers y Modales
+  const [isPayloadsDrawerOpen, setIsPayloadsDrawerOpen] = useState(false);
+  const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState(false);
+
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [selectedArchiveApp, setSelectedArchiveApp] = useState<{ titleId: string; name: string } | null>(null);
   const [activeArchiveUpdates, setActiveArchiveUpdates] = useState<ArchiveOrgGameUpdate[]>([]);
@@ -77,7 +102,7 @@ export function Dashboard() {
 
   const addLog = (msg: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setActivityLogs((prev) => [`[${timestamp}] ${msg}`, ...prev.slice(0, 40)]);
+    setActivityLogs((prev) => [`[${timestamp}] ${msg}`, ...prev.slice(0, 50)]);
   };
 
   const handleCopyLogs = async () => {
@@ -91,7 +116,19 @@ export function Dashboard() {
     }
   };
 
-  // Comprobar actualización de Tooly Desktop (al arrancar y bajo demanda)
+  // Atajo de teclado ⌘K / Ctrl+K para buscar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Comprobar actualización de Tooly Desktop
   const handleCheckAppUpdate = async (silent = false) => {
     setIsCheckingAppUpdate(true);
     if (!silent) addLog(t.checkToolyUpdate + "...");
@@ -104,15 +141,12 @@ export function Dashboard() {
         addLog(t.toolyUpToDate);
       }
     } catch (err: any) {
-      if (!silent) {
-        addLog(`Error al comprobar versión de Tooly: ${err}`);
-      }
+      if (!silent) addLog(`Error al comprobar versión de Tooly: ${err}`);
     } finally {
       setIsCheckingAppUpdate(false);
     }
   };
 
-  // Auto-comprobación pasiva de versión de Tooly al cargar
   useEffect(() => {
     handleCheckAppUpdate(true);
   }, []);
@@ -122,14 +156,12 @@ export function Dashboard() {
     setIsDiscovering(true);
     addLog(t.logDiscovering);
     try {
-      // Pasamos la IP actual como hint base o dejamos que detecte la LAN interface
       const baseHint = ps5Ip.trim().length > 0 ? ps5Ip.trim() : undefined;
       const discovered = await tauriApi.discoverPs5Consoles(baseHint);
       if (discovered.length > 0) {
         const selected = discovered[0];
         setPs5Ip(selected.ip);
         addLog(t.logDiscoveredSuccess(discovered.length, selected.ip));
-        // Opcional: auto-disparar escaneo si FTP está abierto
         if (selected.ftp_open) {
           setTimeout(() => {
             handleScanPs5WithIp(selected.ip);
@@ -150,18 +182,28 @@ export function Dashboard() {
     setIsScanningFtp(true);
     addLog(t.logConnectingFtp(targetIp));
     try {
+      // Verificar estado de servicios en paralelo
+      tauriApi.checkPs5Services(targetIp).then((services) => {
+        setConsoleServices(services);
+      }).catch(() => {});
+
       const apps = await tauriApi.scanPs5Apps(targetIp);
       setInstalledApps(apps);
+      setConsoleServices((prev) => (prev ? { ...prev, ftp_open: true } : { ftp_open: true, payload_manager_open: false, elf_loader_port: null }));
       addLog(t.logFtpDone(apps.length));
       await evaluateUpdates(apps);
     } catch (err: any) {
       addLog(t.logFtpError(String(err)));
+      // Si el FTP falló, comprobar si Payload Manager o el ELF loader están activos para orientar al usuario
+      try {
+        const services = await tauriApi.checkPs5Services(targetIp);
+        setConsoleServices(services);
+      } catch (_) {}
     } finally {
       setIsScanningFtp(false);
     }
   };
 
-  // Escaneo FTP de la PS5
   const handleScanPs5 = async () => {
     await handleScanPs5WithIp(ps5Ip);
   };
@@ -179,19 +221,21 @@ export function Dashboard() {
           const currentClean = app.app_ver.replace(/^[vV]/, "").trim();
           const latestClean = rel.tag_name.replace(/^[vV]/, "").trim();
 
-          const hasCompatibleAsset = rel.assets && rel.assets.some((a) => {
-            if (reg.assetPattern) {
-              try {
-                return new RegExp(reg.assetPattern, "i").test(a.name);
-              } catch (_) {}
-            }
-            return (
-              a.name.toLowerCase().endsWith(".pkg") ||
-              a.name.toLowerCase().endsWith(".bin") ||
-              a.name.toLowerCase().endsWith(".elf") ||
-              a.name.toLowerCase().endsWith(".zip")
-            );
-          });
+          const hasCompatibleAsset =
+            rel.assets &&
+            rel.assets.some((a) => {
+              if (reg.assetPattern) {
+                try {
+                  return new RegExp(reg.assetPattern, "i").test(a.name);
+                } catch (_) {}
+              }
+              return (
+                a.name.toLowerCase().endsWith(".pkg") ||
+                a.name.toLowerCase().endsWith(".bin") ||
+                a.name.toLowerCase().endsWith(".elf") ||
+                a.name.toLowerCase().endsWith(".zip")
+              );
+            });
 
           const isNewer = currentClean !== latestClean;
           const hasUpdate = isNewer && Boolean(hasCompatibleAsset);
@@ -226,12 +270,14 @@ export function Dashboard() {
 
     setUpdatesState(stateMap);
 
-    // Búsqueda en segundo plano en Archive.org para juegos comerciales (CUSAxxxxx / PPSAxxxxx)
+    // Búsqueda background en Archive.org para CUSA / PPSA
     for (const app of apps) {
-      const isCommercialGame = (app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) && !app.title_id.startsWith("PAYLOAD_");
+      const isCommercialGame =
+        (app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) &&
+        !app.title_id.startsWith("PAYLOAD_");
       if (isCommercialGame) {
-        // Ejecutar en background sin bloquear la interfaz
-        tauriApi.searchArchiveUpdates(app.title_id, app.app_name, app.app_ver)
+        tauriApi
+          .searchArchiveUpdates(app.title_id, app.app_name, app.app_ver)
           .then((archiveItems) => {
             if (archiveItems && archiveItems.length > 0) {
               setUpdatesState((prev) => {
@@ -252,9 +298,7 @@ export function Dashboard() {
               addLog(`[Archive.org] Se detectaron ${archiveItems.length} paquetes para ${app.app_name || app.title_id}`);
             }
           })
-          .catch((_err) => {
-            // Ignorar errores silenciosos en background
-          });
+          .catch(() => {});
       }
     }
   };
@@ -304,7 +348,7 @@ export function Dashboard() {
     }
   };
 
-  // Escanear payloads locales
+  // Escanear Payloads Locales
   const handleScanPayloads = async () => {
     if (!payloadDir.trim()) return;
     setIsScanningPayloads(true);
@@ -320,546 +364,708 @@ export function Dashboard() {
     }
   };
 
-  // Disparar instalación DPI (o actualización directa FTP si es un payload)
-  const handleUpdateApp = async (titleId: string) => {
-    const item = updatesState[titleId];
-    if (!item || !item.latestRelease || !item.latestRelease.assets.length) return;
+  // Disparar instalación DPI desde GitHub Release
+  const handleTriggerUpdate = async (app: InstalledApp) => {
+    const state = updatesState[app.title_id];
+    if (!state || !state.latestRelease) return;
 
-    const isPayload = titleId.startsWith("PAYLOAD_") || 
-      item.registry?.category === "payload" || 
-      item.registry?.assetPattern?.includes("elf") || 
-      item.registry?.assetPattern?.includes("bin");
+    const assets = state.latestRelease.assets || [];
+    const reg = state.registry;
 
-    if (isPayload) {
-      // Buscar asset .elf o .bin (o .zip que contenga el payload)
-      const payloadAsset = item.latestRelease.assets.find((a) => {
-        const lower = a.name.toLowerCase();
-        return lower.endsWith(".elf") || lower.endsWith(".bin");
-      });
-
-      if (!payloadAsset) {
-        addLog(`No se encontró binario .elf o .bin en el release ${item.latestRelease.tag_name}.`);
-        return;
+    let targetAsset = assets.find((a) => {
+      if (reg?.assetPattern) {
+        try {
+          return new RegExp(reg.assetPattern, "i").test(a.name);
+        } catch (_) {}
       }
-
-      setUpdatingId(titleId);
-      addLog(`Actualizando payload ${item.installed?.app_name || titleId} a ${item.latestRelease.tag_name} vía FTP...`);
-
-      try {
-        const targetFolder = item.installed?.path || "/data/pldmgr/payloads";
-        const msg = await tauriApi.updatePayloadViaFtp(
-          ps5Ip,
-          targetFolder,
-          payloadAsset.browser_download_url,
-          payloadAsset.name,
-          item.latestRelease.tag_name
-        );
-        addLog(msg);
-        // Actualizar versión en la UI
-        setInstalledApps((prev) =>
-          prev.map((a) =>
-            a.title_id === titleId
-              ? { ...a, app_ver: item.latestRelease!.tag_name.replace(/^[vV]/, "") }
-              : a
-          )
-        );
-        setUpdatesState((prev) => ({
-          ...prev,
-          [titleId]: {
-            ...prev[titleId],
-            hasUpdate: false,
-            statusText: t.upToDateBadge,
-          },
-        }));
-      } catch (err: any) {
-        addLog(`Error actualizando payload: ${err}`);
-      } finally {
-        setUpdatingId(null);
-      }
-      return;
-    }
-
-    // Flujo normal de PKG mediante DPI
-    const pkgAsset = item.latestRelease.assets.find((a) => a.name.toLowerCase().endsWith(".pkg"));
-    if (!pkgAsset) {
-      const zipAsset = item.latestRelease.assets.find((a) => {
-        if (item.registry?.assetPattern) {
-          try {
-            return new RegExp(item.registry.assetPattern, "i").test(a.name);
-          } catch (_) {}
-        }
-        return a.name.toLowerCase().endsWith(".zip");
-      });
-
-      if (zipAsset) {
-        addLog(`[Homebrew ZIP] ${item.installed?.app_name || titleId} (${item.latestRelease.tag_name}) se distribuye como paquete ZIP (${zipAsset.name}). Abriendo descarga directa para /data/homebrew/...`);
-        window.open(zipAsset.browser_download_url, "_blank");
-        return;
-      }
-
-      addLog(t.logNoPkgFound(item.latestRelease.tag_name));
-      return;
-    }
-
-    setUpdatingId(titleId);
-    setProgressState({
-      file_name: pkgAsset.name,
-      downloaded_bytes: 0,
-      total_bytes: pkgAsset.size || null,
-      percentage: 0,
-      status: "downloading",
+      return a.name.toLowerCase().endsWith(".pkg");
     });
 
+    if (!targetAsset) {
+      targetAsset = assets.find(
+        (a) => a.name.toLowerCase().endsWith(".bin") || a.name.toLowerCase().endsWith(".elf")
+      );
+    }
+
+    if (!targetAsset) {
+      addLog(t.logNoPkgFound(state.latestRelease.tag_name));
+      return;
+    }
+
+    setUpdatingId(app.title_id);
+    addLog(`Iniciando actualización para ${app.app_name || app.title_id} -> ${targetAsset.name}...`);
+
     try {
-      const res = await tauriApi.triggerDpiUpdate(ps5Ip, pkgAsset.browser_download_url, pkgAsset.name);
-      addLog(res.message);
+      const res = await tauriApi.triggerDpiUpdate(ps5Ip, targetAsset.browser_download_url, targetAsset.name);
+      addLog(t.logDpiSuccess(targetAsset.name) + (res.message ? ` (${res.message})` : ""));
     } catch (err: any) {
-      addLog(String(err));
+      addLog(t.logDpiError(targetAsset.name) + `: ${err}`);
     } finally {
       setUpdatingId(null);
+      setProgressState(null);
     }
   };
 
-  return (
-    <div className="h-screen bg-[#05070f] text-slate-100 flex flex-col font-sans ambient-radial-glow select-none overflow-hidden">
-      {/* Top Header / Navigation Bar */}
-      <header className="glass-panel px-6 py-3.5 flex items-center justify-between border-b border-cyan-500/20 shrink-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl blur-xs opacity-70 group-hover:opacity-100 transition duration-300"></div>
-            <img
-              src="/logo.png"
-              alt="Tooly Logo"
-              className="relative w-9 h-9 rounded-xl object-contain bg-slate-950/80 p-0.5 border border-cyan-400/30"
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold text-base tracking-wide bg-gradient-to-r from-white via-slate-200 to-cyan-300 bg-clip-text text-transparent">
-                TOOLY
-              </h1>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border border-cyan-500/30 text-cyan-400 bg-cyan-950/40">
-                Core v0.1.0
-              </span>
+  // Inyectar / Arrancar Servidor FTP
+  const handleInjectFtpServer = async () => {
+    if (!ps5Ip.trim()) return;
+    setIsInjectingFtp(true);
+    addLog(t.logInjectingFtp(ps5Ip));
 
-              {/* Tooly App Self-Update Indicator */}
-              {appUpdate?.has_update ? (
-                <a
-                  href={appUpdate.html_url || appUpdate.download_url || "https://github.com/Thefederico/tooly/releases"}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={`${t.toolyUpdateAvailable} ${appUpdate.latest_version}`}
-                  className="flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-500/50 px-2 py-0.5 rounded-full hover:bg-amber-900/80 transition-all shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse"
-                >
-                  <ArrowUpCircle className="w-3 h-3 text-amber-400" />
-                  <span>v{appUpdate.latest_version}</span>
-                  <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-                </a>
-              ) : (
-                <button
-                  onClick={() => handleCheckAppUpdate(false)}
-                  disabled={isCheckingAppUpdate}
-                  title={t.checkToolyUpdate}
-                  className="text-slate-500 hover:text-cyan-400 text-[10px] font-mono flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <RefreshCw className={`w-2.5 h-2.5 ${isCheckingAppUpdate ? "animate-spin text-cyan-400" : ""}`} />
-                </button>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400">{t.subtitle}</p>
+    // Buscar si hay un ftpsrv.elf en la carpeta local de payloads escaneada
+    const localFtp = localPayloads.find((p) => {
+      const name = p.file_name.toLowerCase();
+      return name.includes("ftpsrv") || name.includes("ftps5");
+    });
+
+    try {
+      const msg = await tauriApi.injectFtpServer(ps5Ip, undefined, localFtp?.full_path);
+      addLog(t.logFtpInjectDone(msg));
+      setConsoleServices((prev) => (prev ? { ...prev, ftp_open: true } : { ftp_open: true, payload_manager_open: false, elf_loader_port: null }));
+      // Disparar escaneo automático tras arranque de FTP
+      setTimeout(() => {
+        handleScanPs5WithIp(ps5Ip);
+      }, 500);
+    } catch (err: any) {
+      addLog(t.logFtpInjectError(String(err)));
+    } finally {
+      setIsInjectingFtp(false);
+    }
+  };
+
+  // Enviar payload local por socket TCP (puerto 9021 o 9020)
+  const handleSendPayloadToPs5 = async (payload: LocalPayload) => {
+    if (!ps5Ip.trim()) return;
+    setIsSendingPayload(true);
+    const targetPort = consoleServices?.elf_loader_port || 9021;
+    addLog(t.logInjectingPayload(payload.file_name, ps5Ip, targetPort));
+    try {
+      const res = await tauriApi.injectLocalPayload(ps5Ip, targetPort, payload.full_path);
+      addLog(t.logPayloadInjectSuccess(payload.file_name, targetPort) + ` (${res})`);
+    } catch (err: any) {
+      addLog(t.logPayloadInjectError(String(err)));
+    } finally {
+      setIsSendingPayload(false);
+    }
+  };
+
+  // Escuchar eventos de progreso de descarga DPI en tiempo real
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<DownloadProgressPayload>("dpi-download-progress", (event) => {
+      setProgressState(event.payload);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
+  // Filtrado de aplicaciones
+  const filteredApps = installedApps.filter((app) => {
+    const state = updatesState[app.title_id];
+    const name = (app.app_name || state?.registry?.name || app.title_id).toLowerCase();
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      name.includes(searchQuery.toLowerCase()) ||
+      app.title_id.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (activeFilter === "updates") return state?.hasUpdate;
+    if (activeFilter === "homebrew") {
+      return !app.title_id.startsWith("CUSA") && !app.title_id.startsWith("PPSA");
+    }
+    if (activeFilter === "games") {
+      return app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA");
+    }
+
+    return true;
+  });
+
+  const updatesCount = Object.values(updatesState).filter((s) => s.hasUpdate).length;
+
+  // App destacada para el Showcase Banner superior (la primera con actualización disponible)
+  const featuredApp =
+    installedApps.find((app) => updatesState[app.title_id]?.hasUpdate) ||
+    installedApps[0] ||
+    null;
+
+  const featuredState = featuredApp ? updatesState[featuredApp.title_id] : null;
+
+  return (
+    <div className="flex flex-col h-screen w-screen bg-[#111318] text-[#eceff4] select-none overflow-hidden font-sans">
+      {/* Top Header Bar (72px) */}
+      <header className="h-[72px] px-8 bg-[#151821] border-b border-[#212634] flex items-center justify-between shrink-0 gap-4 z-20">
+        {/* Brand & Tabs */}
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <h1 className="font-bold text-lg tracking-[2px] text-white">TOOLY</h1>
+            <span className="text-[10px] font-mono text-[#828fa3] tracking-wide">
+              // PS5 STUDIO
+            </span>
           </div>
+
+          <PsSymbols className="hidden xl:flex opacity-60" />
+
+          {/* Navigation Pills */}
+          <nav className="flex items-center gap-1.5 p-1 rounded-full bg-[#111318] border border-[#212634]">
+            <button
+              onClick={() => setActiveFilter("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                activeFilter === "all"
+                  ? "bg-[#222736] text-[#eceff4]"
+                  : "text-[#828fa3] hover:text-[#eceff4]"
+              }`}
+            >
+              Library
+            </button>
+            <button
+              onClick={() => setActiveFilter("updates")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeFilter === "updates"
+                  ? "bg-[#2c2317] text-[#d49b4b] border border-[#523d20]"
+                  : "text-[#828fa3] hover:text-[#eceff4]"
+              }`}
+            >
+              <span>Updates</span>
+              {updatesCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#d49b4b] text-[#111318] font-mono font-bold">
+                  {updatesCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setIsPayloadsDrawerOpen(true)}
+              className="px-3.5 py-1.5 rounded-full text-xs text-[#828fa3] hover:text-[#eceff4] hover:bg-[#1a1e2b] transition-all cursor-pointer flex items-center gap-1"
+            >
+              <FileCode2 className="w-3.5 h-3.5 text-[#7e6e9c]" />
+              <span>Payloads</span>
+              {localPayloads.length > 0 && (
+                <span className="text-[10px] font-mono text-[#7e6e9c]">({localPayloads.length})</span>
+              )}
+            </button>
+            <button
+              onClick={() => setIsLogsDrawerOpen(true)}
+              className="px-3.5 py-1.5 rounded-full text-xs text-[#828fa3] hover:text-[#eceff4] hover:bg-[#1a1e2b] transition-all cursor-pointer flex items-center gap-1"
+            >
+              <Terminal className="w-3.5 h-3.5 text-[#4e9a78]" />
+              <span>Logs</span>
+            </button>
+          </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <PsSymbols className="hidden sm:flex" />
+        {/* Center: Search & Command Bar */}
+        <div className="relative w-64 lg:w-72 hidden md:block">
+          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#546075]" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search games & CUSA..."
+            className="w-full bg-[#191c26] border border-[#262c3d] rounded-full pl-9 pr-12 py-1.5 text-xs text-[#eceff4] placeholder:text-[#546075] focus:outline-none focus:border-[#3b5b8e] transition-all"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#222736] text-[#828fa3] border border-[#2c3346]">
+            ⌘K
+          </span>
+        </div>
 
-          {/* Selector/Toggle de idioma OS (EN/ES) con persistencia */}
+        {/* Right: PS5 Console Connection Pill & Actions */}
+        <div className="flex items-center gap-3">
+          {/* Botón rápido Inyectar FTP si se detecta caído o si el usuario quiere arrancarlo */}
+          {consoleServices && !consoleServices.ftp_open && (
+            <button
+              onClick={handleInjectFtpServer}
+              disabled={isInjectingFtp || isScanningFtp}
+              title={
+                consoleServices.payload_manager_open
+                  ? `${t.injectFtpBtn} (${t.payloadManagerDetected})`
+                  : consoleServices.elf_loader_port
+                  ? `${t.injectFtpBtn} (${t.elfLoaderDetected} :${consoleServices.elf_loader_port})`
+                  : t.injectFtpBtn
+              }
+              className="px-3 py-1.5 rounded-full bg-[#372412] hover:bg-[#4d3217] border border-[#7a4c1f] text-[#f2a859] hover:text-[#ffd699] text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50 animate-pulse"
+            >
+              <Zap className={`w-3.5 h-3.5 ${isInjectingFtp ? "animate-spin" : "text-[#f2a859]"}`} />
+              <span>{isInjectingFtp ? t.injectingFtp : t.injectFtpBtn}</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 pl-3 pr-1 py-1 rounded-full bg-[#191c26] border border-[#262c3d]">
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                consoleServices?.ftp_open
+                  ? "bg-[#4e9a78]"
+                  : consoleServices && !consoleServices.ftp_open
+                  ? "bg-[#d49b4b]"
+                  : "bg-[#4e9a78]"
+              }`}
+            ></span>
+            <input
+              type="text"
+              value={ps5Ip}
+              onChange={(e) => setPs5Ip(e.target.value)}
+              placeholder="192.168.1.xxx"
+              className="w-28 bg-transparent text-xs font-mono font-bold text-[#eceff4] focus:outline-none"
+            />
+            <button
+              onClick={handleDiscoverPs5}
+              disabled={isDiscovering || isScanningFtp}
+              title={t.autoDetectTooltip}
+              className="p-1 rounded-full text-[#6b94bd] hover:text-white hover:bg-[#222736] transition-colors cursor-pointer"
+            >
+              <Radar className={`w-3.5 h-3.5 ${isDiscovering ? "animate-spin text-[#d49b4b]" : ""}`} />
+            </button>
+            <button
+              onClick={handleScanPs5}
+              disabled={isScanningFtp || isDiscovering}
+              className="px-3 py-1 bg-[#242a3a] hover:bg-[#2e364a] text-[#6b94bd] hover:text-white text-[11px] font-mono font-bold rounded-full transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3 h-3 ${isScanningFtp ? "animate-spin text-[#6b94bd]" : ""}`} />
+              <span>{isScanningFtp ? t.scanning : "SCAN"}</span>
+            </button>
+          </div>
+
+          {/* Selector de idioma ES/EN */}
           <button
             onClick={handleToggleLanguage}
-            title={lang === "es" ? "Cambiar a Inglés" : "Switch to Spanish"}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/70 hover:bg-slate-800 border border-slate-700/60 hover:border-cyan-400/50 text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition-all cursor-pointer active:scale-95"
+            title={lang === "es" ? "Switch to English" : "Cambiar a Español"}
+            className="px-2.5 py-1.5 rounded-full bg-[#191c26] hover:bg-[#222736] border border-[#262c3d] text-xs font-mono font-bold text-[#eceff4] transition-colors cursor-pointer"
           >
-            <Languages className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="uppercase font-bold">{lang}</span>
+            {lang.toUpperCase()}
           </button>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 border border-slate-700/50 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-slate-300 font-mono text-[11px]">{t.portsStatus}</span>
-          </div>
+          {/* Tooly update badge */}
+          {appUpdate?.has_update && (
+            <a
+              href="https://github.com/Thefederico/tooly/releases"
+              target="_blank"
+              rel="noreferrer"
+              title={`${t.toolyUpdateAvailable} ${appUpdate.latest_version}`}
+              className="px-2.5 py-1 rounded-full bg-[#2c2317] border border-[#523d20] text-[#d49b4b] text-[10px] font-mono font-bold flex items-center gap-1"
+            >
+              <ArrowUpCircle className="w-3 h-3" />
+              <span>v{appUpdate.latest_version}</span>
+            </a>
+          )}
         </div>
       </header>
 
-      {/* Live Global Progress Bar for Active Operations */}
-      {progressState && (
-        <section className="bg-slate-950/90 border-b border-cyan-500/30 px-6 py-2.5 transition-all duration-300 shrink-0">
-          <div className="max-w-7xl mx-auto flex flex-col gap-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                <span className="font-semibold text-slate-200">
-                  {progressState.status === "downloading"
-                    ? `${t.downloading} ${progressState.file_name}`
-                    : progressState.status === "starting_dpi_server"
-                    ? t.startingDpiServer
-                    : progressState.status === "triggering_dpi"
-                    ? t.triggeringDpi
-                    : progressState.status === "installed_success"
-                    ? t.installSuccess
-                    : t.processingUpdate}
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6">
+        {/* Featured Showcase Hero Banner (Si hay apps escaneadas) */}
+        {featuredApp && (
+          <section className="w-full rounded-2xl bg-[#171b26] border border-[#262d3e] p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-sm">
+            <div className="flex items-center gap-5">
+              {/* Cover Art Box */}
+              <div className="w-32 h-32 rounded-xl bg-[#1e2536] border border-[#2b354c] flex flex-col items-center justify-center p-3 shrink-0 text-center">
+                <span className="font-bold text-lg tracking-tight text-[#eceff4] truncate max-w-full">
+                  {featuredApp.app_name || featuredState?.registry?.name || featuredApp.title_id}
+                </span>
+                <span className="text-[11px] font-mono text-[#6b8eb6] mt-1">
+                  {featuredApp.app_ver || "v1.00"}
+                </span>
+                <span className="mt-2 px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-[#26203b] text-[#8e82b3] border border-[#372d54]">
+                  {featuredApp.title_id.startsWith("CUSA") ? "PS4 GAME" : "PS5 HOMEBREW"}
                 </span>
               </div>
-              <span className="font-mono text-cyan-400 font-bold">
-                {progressState.percentage.toFixed(1)}%
-              </span>
-            </div>
 
-            <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-              <div
-                className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-200 shadow-[0_0_12px_rgba(0,240,255,0.6)]"
-                style={{ width: `${Math.min(100, Math.max(0, progressState.percentage))}%` }}
-              />
-            </div>
-
-            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-              <span>
-                {(progressState.downloaded_bytes / (1024 * 1024)).toFixed(2)} MB{" "}
-                {progressState.total_bytes
-                  ? `/ ${(progressState.total_bytes / (1024 * 1024)).toFixed(2)} MB`
-                  : ""}
-              </span>
-              <span className="uppercase text-cyan-500/80">{progressState.status}</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Main Cockpit Bento Grid */}
-      <main className="p-5 max-w-7xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-0 overflow-hidden">
-        {/* Left Column: Console Connect & Local Directory (4 cols) */}
-        <section className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1">
-          {/* Box 1: PS5 Connection Card */}
-          <div className="glass-panel rounded-2xl p-4.5 flex flex-col gap-3.5 shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Wifi className="w-4 h-4 text-cyan-400" />
-                <h2 className="font-semibold text-sm tracking-wide text-slate-200">{t.ps5Console}</h2>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">{t.etaHenTarget}</span>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs text-slate-400 font-medium">{t.consoleIpLabel}</label>
-                <button
-                  onClick={handleDiscoverPs5}
-                  disabled={isDiscovering || isScanningFtp}
-                  title={t.autoDetectTooltip}
-                  className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 disabled:opacity-50 cursor-pointer transition-colors"
-                >
-                  <Radar className={`w-3.5 h-3.5 ${isDiscovering ? "animate-spin text-cyan-300" : ""}`} />
-                  <span>{isDiscovering ? t.autoDetecting : t.autoDetect}</span>
-                </button>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="text"
-                  value={ps5Ip}
-                  onChange={(e) => setPs5Ip(e.target.value)}
-                  placeholder="192.168.1.xxx"
-                  className="flex-1 bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs font-mono text-cyan-300 placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all shadow-inner"
-                />
-                <button
-                  onClick={handleScanPs5}
-                  disabled={isScanningFtp || isDiscovering}
-                  className="w-32 py-2.5 px-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_16px_rgba(0,112,209,0.35)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningFtp ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isScanningFtp ? t.scanning : t.scan}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-slate-950/50 rounded-xl p-2.5 border border-slate-800/80 text-[11px] flex flex-col gap-1.5 text-slate-400">
-              <div className="flex justify-between">
-                <span>{t.appsDetected}</span>
-                <span className="font-mono text-cyan-400 font-bold">{installedApps.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t.scannedPaths}</span>
-                <span className="font-mono text-slate-300">/user/app, /data</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Box 2: Local Payloads Scanner */}
-          <div className="glass-panel rounded-2xl p-4.5 flex flex-col gap-3.5 shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Folder className="w-4 h-4 text-blue-400" />
-                <h2 className="font-semibold text-sm tracking-wide text-slate-200">{t.localPayloads}</h2>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">{t.payloadExt}</span>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-slate-400 font-medium">{t.folderPathLabel}</label>
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="text"
-                  value={payloadDir}
-                  onChange={(e) => setPayloadDir(e.target.value)}
-                  placeholder={t.folderPlaceholder}
-                  className="flex-1 bg-slate-950/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
-                />
-                <button
-                  onClick={handleScanPayloads}
-                  disabled={isScanningPayloads}
-                  className="w-32 py-2.5 px-3 bg-slate-800 hover:bg-slate-700/90 active:scale-[0.98] text-slate-200 hover:text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 border border-slate-700/60 hover:border-slate-600 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isScanningPayloads ? "animate-spin" : ""}`} />
-                  <span className="truncate">{isScanningPayloads ? t.scanning : t.scan}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Lista de payloads locales */}
-            <div className="max-h-36 overflow-y-auto flex flex-col gap-1.5 pr-1">
-              {localPayloads.length === 0 ? (
-                <div className="text-center py-2.5 text-xs text-slate-500 italic">
-                  {t.noPayloadsPrompt}
-                </div>
-              ) : (
-                localPayloads.map((p, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
+              {/* Showcase Info */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-1 ${
+                      featuredState?.hasUpdate
+                        ? "bg-[#2c2317] text-[#d49b4b] border border-[#523d20]"
+                        : "bg-[#193125] text-[#4e9a78] border border-[#264d39]"
+                    }`}
                   >
-                    <div className="flex flex-col truncate pr-2">
-                      <span className="font-semibold text-slate-300 truncate">{p.detected_name}</span>
-                      <span className="text-[10px] font-mono text-slate-500 truncate">{p.file_name}</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded bg-blue-950/50 border border-blue-500/30 text-blue-400 font-mono text-[10px]">
-                      {p.detected_version ? `v${p.detected_version}` : p.extension.toUpperCase()}
-                    </span>
-                  </div>
-                ))
+                    {featuredState?.hasUpdate ? "● UPDATE AVAILABLE" : "● UP TO DATE"}
+                  </span>
+                  <span className="text-xs font-mono text-[#64748b]">
+                    {featuredApp.title_id}
+                  </span>
+                </div>
+
+                <h2 className="text-xl font-bold text-[#eceff4]">
+                  {featuredApp.app_name || featuredState?.registry?.name || featuredApp.title_id}
+                </h2>
+
+                <p className="text-xs text-[#828fa3] max-w-2xl leading-relaxed">
+                  {featuredState?.registry?.githubRepo
+                    ? `Repository: ${featuredState.registry.githubRepo} · Remote PARAM.SFO verified`
+                    : "Installed in console storage (/user/app) · Ready for DPI operations"}
+                </p>
+
+                <div className="flex items-center gap-3 text-[11px] font-mono text-[#94a3b8] mt-1">
+                  <span>Installed: v{featuredApp.app_ver}</span>
+                  {featuredState?.latestRelease && (
+                    <>
+                      <span>→</span>
+                      <span className="text-[#d49b4b] font-bold">
+                        Latest: {featuredState.latestRelease.tag_name}
+                      </span>
+                    </>
+                  )}
+                  <span>·</span>
+                  <span className="text-[#64748b]">Target: PS5 DPI (:12800)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Showcase Action Button */}
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 w-full lg:w-56">
+              {featuredState?.hasUpdate ? (
+                <button
+                  onClick={() => handleTriggerUpdate(featuredApp)}
+                  disabled={updatingId === featuredApp.title_id}
+                  className="w-full py-2.5 px-4 bg-[#3b5b8e] hover:bg-[#4a6fa8] active:scale-[0.99] text-[#eceff4] text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <ArrowDownToLine className="w-4 h-4" />
+                  <span>
+                    {updatingId === featuredApp.title_id ? t.installingBtn : "1-CLICK INSTALL (DPI)"}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleTriggerUpdate(featuredApp)}
+                  className="w-full py-2.5 px-4 bg-[#1d2230] hover:bg-[#262c3d] text-[#eceff4] border border-[#2a3245] text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-[#828fa3]" />
+                  <span>REINSTALL / PUSH PKG</span>
+                </button>
+              )}
+
+              {featuredState?.registry?.githubRepo && (
+                <a
+                  href={`https://github.com/${featuredState.registry.githubRepo}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-2 px-3 bg-[#171b26] hover:bg-[#1f2433] text-[#828fa3] hover:text-[#eceff4] border border-[#262d3e] text-xs font-mono rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <span>GitHub Releases</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Library Sub-header & Filter Tabs */}
+        <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-bold text-[#eceff4]">CONSOLE LIBRARY</h2>
+            <span className="text-xs text-[#64748b]">
+              ({installedApps.length} {t.appsDetected.toLowerCase()})
+            </span>
           </div>
 
-          {/* Box 3: Terminal / Activity Feed */}
-          <div className="glass-panel rounded-2xl p-4 flex flex-col gap-2 flex-1 min-h-[140px] shrink-0">
-            <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="font-medium text-slate-300">{t.operationsLog}</span>
-              </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center p-0.5 rounded-xl bg-[#151821] border border-[#212634] text-xs">
               <button
-                onClick={handleCopyLogs}
-                title={t.copyLogsTooltip}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-cyan-500/40 text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition-all cursor-pointer active:scale-95"
+                onClick={() => setActiveFilter("all")}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  activeFilter === "all"
+                    ? "bg-[#222736] text-[#eceff4]"
+                    : "text-[#828fa3] hover:text-[#eceff4]"
+                }`}
               >
-                {isCopied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400 font-sans">{t.copied}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3 text-slate-400 hover:text-cyan-400" />
-                    <span className="font-sans">{t.copy}</span>
-                  </>
-                )}
+                All ({installedApps.length})
+              </button>
+              <button
+                onClick={() => setActiveFilter("updates")}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  activeFilter === "updates"
+                    ? "bg-[#2c2317] text-[#d49b4b]"
+                    : "text-[#828fa3] hover:text-[#eceff4]"
+                }`}
+              >
+                Updates ({updatesCount})
+              </button>
+              <button
+                onClick={() => setActiveFilter("homebrew")}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeFilter === "homebrew"
+                    ? "bg-[#222736] text-[#eceff4]"
+                    : "text-[#828fa3] hover:text-[#eceff4]"
+                }`}
+              >
+                Homebrew
+              </button>
+              <button
+                onClick={() => setActiveFilter("games")}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeFilter === "games"
+                    ? "bg-[#222736] text-[#eceff4]"
+                    : "text-[#828fa3] hover:text-[#eceff4]"
+                }`}
+              >
+                Games
               </button>
             </div>
-            <div className="font-mono text-[11px] text-slate-400 flex flex-col gap-1 overflow-y-auto max-h-40 pr-1 select-text cursor-text">
-              {activityLogs.map((log, index) => (
-                <div key={index} className="leading-tight select-text">
-                  <span className="text-cyan-500/70 select-text">{log}</span>
-                </div>
-              ))}
-            </div>
+
+            <button
+              onClick={handleScanPs5}
+              disabled={isScanningFtp}
+              className="px-3 py-1.5 bg-[#1a1e2b] hover:bg-[#222737] border border-[#262c3d] rounded-xl text-xs font-mono text-[#eceff4] flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isScanningFtp ? "animate-spin text-[#6b94bd]" : ""}`} />
+              <span>Refresh</span>
+            </button>
           </div>
         </section>
 
-        {/* Right Column: Homebrew Apps & Update Feed (8 cols) */}
-        <section className="lg:col-span-8 flex flex-col min-h-0 overflow-y-auto pr-1">
-          <div className="glass-panel rounded-2xl p-5 flex flex-col gap-4 flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-cyan-400" />
-                  {t.installedAppsTitle}
-                </h2>
-                <p className="text-xs text-slate-400">
-                  {t.installedAppsSubtitle}
-                </p>
-              </div>
+        {/* Gallery Cards Grid */}
+        {installedApps.length === 0 ? (
+          <div className="py-24 flex flex-col items-center justify-center border border-dashed border-[#222737] rounded-2xl text-center px-6 bg-[#13161f]">
+            <Layers className="w-12 h-12 text-[#546075] mb-3" />
+            <h3 className="font-bold text-[#eceff4] text-base">{t.noAppsTitle}</h3>
+            <p className="text-xs text-[#828fa3] max-w-md mt-1 leading-relaxed">
+              {t.noAppsDesc}
+            </p>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-mono">
-                  {Object.values(updatesState).filter((s) => s.hasUpdate).length} {t.pendingUpdates}
-                </span>
-              </div>
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                onClick={handleScanPs5}
+                disabled={isScanningFtp || isInjectingFtp}
+                className="px-6 py-2.5 bg-[#3b5b8e] hover:bg-[#4a6fa8] text-[#eceff4] font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isScanningFtp ? "animate-spin" : ""}`} />
+                <span>{isScanningFtp ? t.scanningConsole : t.scanPs5Now}</span>
+              </button>
+
+              <button
+                onClick={handleInjectFtpServer}
+                disabled={isInjectingFtp || isScanningFtp}
+                className="px-5 py-2.5 bg-[#2c1d0e] hover:bg-[#3d2914] border border-[#6b4217] text-[#e59b4c] font-bold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Zap className={`w-3.5 h-3.5 ${isInjectingFtp ? "animate-spin" : "text-[#d49b4b]"}`} />
+                <span>{isInjectingFtp ? t.injectingFtp : t.injectFtpBtn}</span>
+              </button>
             </div>
+          </div>
+        ) : filteredApps.length === 0 ? (
+          <div className="py-20 text-center text-xs text-[#64748b] italic">
+            No applications match the current filter or search criteria.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredApps.map((app) => {
+              const state = updatesState[app.title_id];
+              const hasUpdate = state?.hasUpdate;
+              const hasArchiveUpdates = state?.archiveUpdates && state.archiveUpdates.length > 0;
+              const isCommercial = app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA");
 
-            {/* Listado de aplicaciones */}
-            {installedApps.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center border border-dashed border-cyan-500/15 rounded-2xl text-center px-6 bg-slate-950/20 backdrop-blur-xs my-auto">
-                <div className="relative group mb-3">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full blur-sm opacity-40 group-hover:opacity-80 transition duration-300"></div>
-                  <div className="relative w-12 h-12 rounded-full bg-slate-900/90 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
-                    <DownloadCloud className="w-6 h-6" />
-                  </div>
-                </div>
-                <h3 className="font-semibold text-slate-100 text-sm tracking-wide">{t.noAppsTitle}</h3>
-                <p className="text-xs text-slate-400 max-w-md mt-1 leading-relaxed">
-                  {t.noAppsDesc}
-                </p>
-                <button
-                  onClick={handleScanPs5}
-                  disabled={isScanningFtp}
-                  className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,112,209,0.4)] disabled:opacity-50 cursor-pointer"
+              // Color mate temático para la portada
+              const coverBg = isCommercial
+                ? "bg-[#221b26]" // Mate ciruela para juegos comerciales
+                : hasUpdate
+                ? "bg-[#262016]" // Mate bronce para apps con update
+                : "bg-[#16231d]"; // Mate pino para homebrew al día
+
+              return (
+                <div
+                  key={app.title_id}
+                  className="rounded-2xl bg-[#151822] border border-[#222737] hover:border-[#2e364c] transition-all flex flex-col overflow-hidden shadow-sm"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isScanningFtp ? "animate-spin" : ""}`} />
-                  {isScanningFtp ? t.scanningConsole : t.scanPs5Now}
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {installedApps.map((app) => {
-                  const state = updatesState[app.title_id];
-                  const hasUpdate = state?.hasUpdate;
-                  const isUpdating = updatingId === app.title_id;
+                  {/* Poster Area (180px) */}
+                  <div className={`h-44 ${coverBg} p-4 flex flex-col justify-between relative`}>
+                    {/* Floating Status Badge */}
+                    <div className="flex items-center justify-between gap-2">
+                      {hasUpdate ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#2c2317] text-[#d49b4b] border border-[#523d20]">
+                          UPDATE READY
+                        </span>
+                      ) : hasArchiveUpdates ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1c2735] text-[#6692b0] border border-[#2b3d52]">
+                          ARCHIVE.ORG ({state.archiveUpdates?.length})
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#193125] text-[#4e9a78] border border-[#264d39]">
+                          ● UP TO DATE
+                        </span>
+                      )}
 
-                  return (
-                    <div
-                      key={app.title_id}
-                      className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
-                        hasUpdate
-                          ? "bg-slate-900/80 border-cyan-500/40 shadow-[0_0_20px_rgba(0,240,255,0.1)]"
-                          : "bg-slate-950/40 border-slate-800/80 hover:border-slate-700"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-slate-100">
-                              {app.app_name || state?.registry?.name || app.title_id}
-                            </h4>
-                            {app.title_id.startsWith("PAYLOAD_") && (
-                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-500/40 text-purple-300">
-                                Payload
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] font-mono text-cyan-400/90">{app.title_id}</span>
-                        </div>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#111318]/70 text-[#828fa3]">
+                        {isCommercial ? "GAME" : "HOMEBREW"}
+                      </span>
+                    </div>
 
-                        {hasUpdate ? (
-                          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-950/50 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                            <Sparkles className="w-3 h-3 text-amber-400" /> {t.updateBadge}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                            <ShieldCheck className="w-3 h-3 text-emerald-400" /> {t.upToDateBadge}
+                    {/* Emblem & Title in Cover */}
+                    <div>
+                      <h4 className="font-bold text-base text-[#eceff4] truncate">
+                        {app.app_name || state?.registry?.name || app.title_id}
+                      </h4>
+                      <p className="text-[10px] font-mono text-[#828fa3] mt-0.5">
+                        {app.title_id} · {app.app_ver ? `v${app.app_ver}` : "v1.00"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-4 flex-1 flex flex-col justify-between gap-3 bg-[#151822]">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold text-[#eceff4] truncate">
+                        {app.app_name || state?.registry?.name || app.title_id}
+                      </span>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-[#828fa3]">
+                        <span>Installed: v{app.app_ver || "1.00"}</span>
+                        {state?.latestRelease && (
+                          <span className="text-[#d49b4b] font-bold">
+                            {state.latestRelease.tag_name}
                           </span>
                         )}
                       </div>
-
-                      <div className="bg-slate-950/60 rounded-lg p-2.5 border border-slate-800/60 flex items-center justify-between text-xs font-mono">
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">{t.installedVer}</span>
-                          <span className="text-slate-300 font-bold">{app.app_ver}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-slate-500 block text-[10px]">{t.onGithubVer}</span>
-                          <span className="text-cyan-300 font-bold">
-                            {state?.latestRelease?.tag_name || "—"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Mini progress bar if updating this app */}
-                      {isUpdating && progressState && (
-                        <div className="flex flex-col gap-1 w-full bg-slate-950/80 p-2 rounded-lg border border-cyan-500/30">
-                          <div className="flex justify-between text-[10px] font-mono">
-                            <span className="text-cyan-300 truncate max-w-[140px]">{progressState.status}</span>
-                            <span className="text-cyan-400 font-bold">{progressState.percentage.toFixed(0)}%</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-cyan-400 transition-all duration-150"
-                              style={{ width: `${progressState.percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-1 gap-2 flex-wrap">
-                        <span className="text-[11px] text-slate-400 truncate max-w-[130px]">
-                          {state?.statusText || t.statusScanned}
-                        </span>
-
-                        <div className="flex items-center gap-1.5 ml-auto">
-                          {/* Botón Archive.org para juegos comerciales */}
-                          {(app.title_id.startsWith("CUSA") || app.title_id.startsWith("PPSA")) && !app.title_id.startsWith("PAYLOAD_") && (
-                            <button
-                              onClick={() => handleOpenArchiveModal(app)}
-                              title={t.archiveUpdatesBtn}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/70 hover:border-cyan-400/50 text-[11px] font-medium text-cyan-300 hover:text-cyan-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                            >
-                              <Database className="w-3 h-3 text-cyan-400" />
-                              <span>Archive.org</span>
-                              {state?.archiveUpdates && state.archiveUpdates.length > 0 && (
-                                <span className="px-1 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold">
-                                  {state.archiveUpdates.length}
-                                </span>
-                              )}
-                            </button>
-                          )}
-
-                          {hasUpdate && state?.latestRelease && (
-                            <button
-                              onClick={() => handleUpdateApp(app.title_id)}
-                              disabled={isUpdating}
-                              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] disabled:opacity-50 cursor-pointer"
-                            >
-                              <DownloadCloud className={`w-3.5 h-3.5 ${isUpdating ? "animate-bounce" : ""}`} />
-                              {isUpdating
-                                ? t.installingBtn
-                                : state.latestRelease.assets.some((a) => a.name.toLowerCase().endsWith(".pkg"))
-                                ? t.updateBtn
-                                : "ZIP Release"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      <p className="text-[10px] text-[#546075] truncate mt-1">
+                        /user/app/{app.title_id}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-1.5 pt-2 border-t border-[#1f2433]">
+                      {hasUpdate ? (
+                        <button
+                          onClick={() => handleTriggerUpdate(app)}
+                          disabled={updatingId === app.title_id}
+                          className="w-full py-2 bg-[#3b5b8e] hover:bg-[#4a6fa8] text-[#eceff4] text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <ArrowDownToLine className="w-3.5 h-3.5" />
+                          <span>{updatingId === app.title_id ? t.installingBtn : "UPDATE (DPI)"}</span>
+                        </button>
+                      ) : isCommercial ? (
+                        <button
+                          onClick={() => handleOpenArchiveModal(app)}
+                          className="w-full py-2 bg-[#2c5874] hover:bg-[#396e91] text-[#eceff4] text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Database className="w-3.5 h-3.5 text-[#6692b0]" />
+                          <span>ARCHIVE UPDATES</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleTriggerUpdate(app)}
+                          className="w-full py-2 bg-[#1d2230] hover:bg-[#252c3d] text-[#828fa3] hover:text-[#eceff4] border border-[#2a3245] text-xs font-mono font-bold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>REINSTALL</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </section>
+        )}
       </main>
 
-      {/* Modal de Actualizaciones de Archive.org */}
-      {selectedArchiveApp && (
-        <ArchiveUpdatesModal
-          isOpen={isArchiveModalOpen}
-          onClose={() => setIsArchiveModalOpen(false)}
-          titleId={selectedArchiveApp.titleId}
-          gameName={selectedArchiveApp.name}
-          updates={activeArchiveUpdates}
-          isLoading={isLoadingArchiveModal}
-          onInstallDirect={handleInstallArchiveDirect}
-          isInstalling={isInstallingArchiveDirect}
-          installingUrl={installingArchiveUrl}
-          lang={lang}
-        />
-      )}
+      {/* Bottom Floating Telemetry & Progress Dock (68px) */}
+      <footer className="h-[68px] px-8 bg-[#13161f] border-t border-[#212634] flex items-center justify-between shrink-0 gap-6 z-20">
+        {/* Left: Console Link info */}
+        <div className="flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#4e9a78] shrink-0"></span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-[#eceff4]">
+              {progressState
+                ? `TRANSFERRING ${progressState.file_name} VIA DPI`
+                : `PS5 CONNECTED (${ps5Ip})`}
+            </span>
+            <span className="text-[10px] font-mono text-[#64748b]">
+              FTP: :2121 · DPI: :12800 · TCP: :9090
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Live Progress Bar if active */}
+        {progressState ? (
+          <div className="flex-1 max-w-xl flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#eceff4] font-bold">
+                {progressState.status === "downloading"
+                  ? `${t.downloading} ${progressState.file_name}`
+                  : progressState.status === "starting_dpi_server"
+                  ? t.startingDpiServer
+                  : progressState.status === "triggering_dpi"
+                  ? t.triggeringDpi
+                  : t.processingUpdate}
+              </span>
+              <span className="text-[#648bae] font-bold">
+                {progressState.percentage.toFixed(1)}% ·{" "}
+                {(progressState.downloaded_bytes / (1024 * 1024)).toFixed(1)} MB
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-[#191e2a] overflow-hidden">
+              <div
+                className="h-full bg-[#3b5b8e] transition-all duration-200"
+                style={{ width: `${Math.min(100, Math.max(0, progressState.percentage))}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-4 text-xs font-mono text-[#64748b]">
+            <span>Local LAN HTTP Server: Standby</span>
+            <span>·</span>
+            <span>Direct Package Installer: Ready</span>
+          </div>
+        )}
+
+        {/* Right: Quick actions for Drawers */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsLogsDrawerOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-[#1c212e] hover:bg-[#252c3d] border border-[#282f42] text-xs font-mono text-[#828fa3] hover:text-[#eceff4] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Terminal className="w-3.5 h-3.5 text-[#4e9a78]" />
+            <span>Console Log ↗</span>
+          </button>
+          <button
+            onClick={() => setIsPayloadsDrawerOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-[#1c212e] hover:bg-[#252c3d] border border-[#282f42] text-xs font-mono text-[#828fa3] hover:text-[#eceff4] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Folder className="w-3.5 h-3.5 text-[#7e6e9c]" />
+            <span>Payloads</span>
+          </button>
+        </div>
+      </footer>
+
+      {/* Drawers y Modales */}
+      <PayloadsDrawer
+        isOpen={isPayloadsDrawerOpen}
+        onClose={() => setIsPayloadsDrawerOpen(false)}
+        payloadDir={payloadDir}
+        setPayloadDir={setPayloadDir}
+        localPayloads={localPayloads}
+        isScanningPayloads={isScanningPayloads}
+        onScanPayloads={handleScanPayloads}
+        onSendPayload={handleSendPayloadToPs5}
+        isSendingPayload={isSendingPayload}
+        lang={lang}
+      />
+
+      <TerminalDrawer
+        isOpen={isLogsDrawerOpen}
+        onClose={() => setIsLogsDrawerOpen(false)}
+        activityLogs={activityLogs}
+        onCopyLogs={handleCopyLogs}
+        isCopied={isCopied}
+        lang={lang}
+      />
+
+      <ArchiveUpdatesModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        titleId={selectedArchiveApp?.titleId || ""}
+        gameName={selectedArchiveApp?.name || ""}
+        updates={activeArchiveUpdates}
+        isLoading={isLoadingArchiveModal}
+        onInstallDirect={handleInstallArchiveDirect}
+        isInstalling={isInstallingArchiveDirect}
+        installingUrl={installingArchiveUrl}
+        lang={lang}
+      />
     </div>
   );
 }
+export default Dashboard;

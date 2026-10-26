@@ -88,4 +88,10 @@ export interface ArchiveOrgGameUpdate {
   description?: string | null;
 }
 
+export interface Ps5ServicesStatus {
+  ftp_open: boolean;
+  payload_manager_open: boolean;
+  elf_loader_port: number | null;
+}
+
 

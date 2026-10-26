@@ -77,9 +77,16 @@ pnpm tauri build
 | Port | Protocol | Purpose |
 |------|----------|---------|
 | `2121` | FTP | Reading installed metadata & uploading payloads |
+| `9021` | Raw TCP | elfldr payload loader (kernel execution) |
+| `9090` / `9099` | TCP Socket | etaHEN command socket & Save Mounter microservices |
 | `12800` | HTTP / DPI | etaHEN Direct Package Installer trigger |
-| `9090` | TCP Socket | Alternative etaHEN JSON command socket |
 | `8844` / `8888` / `10101` | HTTP | PS5 web daemons (PKG-Manager, WebFileManager, ShadowMount+) |
+
+---
+
+## 📚 Technical Manuals & Engineering Specs
+
+- **[PlayStation 5 Systems & Engineering Playbook](docs/PS5_SYSTEMS_AND_PLAYBOOK.md)**: Comprehensive technical specification covering PS5 storage forensics, ShadowMount live exFAT patching (`CE-107098-5`), hardware SAMU savegame cryptographic re-signing, and Rust backend implementation designs.
 
 ---
 

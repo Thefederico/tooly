@@ -4,6 +4,7 @@ use modules::discovery::{DiscoveredPs5, DiscoveryService};
 use modules::dpi::{DpiInstallResponse, DpiService};
 use modules::ftp_scanner::{FtpScanner, InstalledApp};
 use modules::github::{GitHubClient, GitHubReleaseInfo};
+use modules::payload_injector::{PayloadInjectorService, Ps5ServicesStatus};
 use modules::payloads::{LocalPayload, PayloadScanner};
 use std::net::Ipv4Addr;
 use std::str::FromStr;
@@ -112,6 +113,33 @@ async fn check_app_update(repo: Option<String>) -> Result<modules::self_update::
     modules::self_update::SelfUpdateService::check_for_updates(repo.as_deref()).await
 }
 
+#[tauri::command]
+async fn check_ps5_services(ip: String) -> Result<Ps5ServicesStatus, String> {
+    Ok(PayloadInjectorService::check_services(&ip).await)
+}
+
+#[tauri::command]
+async fn inject_ftp_server(
+    ip: String,
+    preferred_port: Option<u16>,
+    local_elf_path: Option<String>,
+) -> Result<String, String> {
+    PayloadInjectorService::inject_ftp_server(&ip, preferred_port, local_elf_path.as_deref()).await
+}
+
+#[tauri::command]
+async fn inject_local_payload(
+    ip: String,
+    port: u16,
+    file_path: String,
+) -> Result<String, String> {
+    let bytes = tokio::fs::read(&file_path)
+        .await
+        .map_err(|e| format!("Error leyendo payload '{file_path}': {e}"))?;
+    PayloadInjectorService::inject_via_socket(&ip, port, &bytes).await?;
+    Ok(format!("Payload enviado exitosamente a {ip}:{port}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -125,7 +153,10 @@ pub fn run() {
             check_app_update,
             search_archive_updates,
             install_archive_update_direct,
-            update_payload_via_ftp
+            update_payload_via_ftp,
+            check_ps5_services,
+            inject_ftp_server,
+            inject_local_payload
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

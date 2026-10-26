@@ -2,54 +2,82 @@
 
 @layer base {
   :root {
-    --bg-deep: #05070f;
-    --bg-card: rgba(10, 14, 26, 0.7);
-    --ps-blue: #0070d1;
-    --ps-glow: #00f0ff;
-    --ps-border: rgba(0, 240, 255, 0.15);
+    /* Superficies mate (Deep Matte Basalt & Slate) */
+    --matte-bg: #111318;
+    --matte-header: #151821;
+    --matte-panel: #171b26;
+    --matte-card: #151822;
+    --matte-card-subtle: #1a1e2b;
+    --matte-dock: #13161f;
+
+    /* Líneas de precisión mate (sin brillos sintéticos) */
+    --matte-border-subtle: #212634;
+    --matte-border-card: #222737;
+    --matte-border-focus: #3b5b8e;
+
+    /* Tinta tipográfica mate (Eggshell & Slate) */
+    --matte-text-primary: #eceff4;
+    --matte-text-secondary: #94a3b8;
+    --matte-text-muted: #828fa3;
+    --matte-text-dim: #546075;
+
+    /* Acentos mate funcionales de baja saturación */
+    --matte-action: #3b5b8e;
+    --matte-action-hover: #4a6fa8;
+    --matte-sage: #4e9a78;
+    --matte-ochre: #d49b4b;
+    --matte-fjord: #2c5874;
+    --matte-lavender: #7e6e9c;
   }
 
   body {
-    background-color: var(--bg-deep);
-    color: #f1f5f9;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--matte-bg);
+    color: var(--matte-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     overflow-x: hidden;
   }
 
-  /* Custom Slim Futuristic Scrollbar */
+  /* Custom Slim Matte Scrollbar */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: rgba(5, 7, 15, 0.6);
+    background: #111318;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 240, 255, 0.2);
+    background: #262c3c;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 240, 255, 0.5);
+    background: #3b445c;
   }
 }
 
-/* Glassmorphism 2.0 Utility Classes */
+/* Matte Luxury Utilities */
+.matte-panel {
+  background-color: var(--matte-panel);
+  border: 1px solid var(--matte-border-subtle);
+}
+
+.matte-card {
+  background-color: var(--matte-card);
+  border: 1px solid var(--matte-border-card);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.matte-card:hover {
+  border-color: #2e364c;
+  background-color: #171b27;
+}
+
+.matte-pill {
+  background-color: var(--matte-card-subtle);
+  border: 1px solid var(--matte-border-subtle);
+}
+
+/* Compatibilidad con código previo */
 .glass-panel {
-  background: rgba(10, 14, 26, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 240, 255, 0.12);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-}
-
-.glass-panel-glow {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 25px -5px rgba(0, 112, 209, 0.25);
-}
-
-.ambient-radial-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(0, 112, 209, 0.18) 0%, rgba(5, 7, 15, 0) 70%);
+  background-color: var(--matte-card);
+  border: 1px solid var(--matte-border-card);
 }
